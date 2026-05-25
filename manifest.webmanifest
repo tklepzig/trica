@@ -1,0 +1,18 @@
+{
+  "name": "Jya",
+  "short_name": "Jya",
+  "description": "Offline trigonometry triangle solver.",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#1e3a5f",
+  "background_color": "#0f172a",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    }
+  ]
+}
