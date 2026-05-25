@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <meta name="theme-color" content="#1e3a5f" />
+    <meta
+      name="viewport"
+      content="user-scalable=yes, initial-scale=1.0, maximum-scale=10.0, width=device-width"
+    />
+    <title>Jya</title>
+    <link href="style.min.css" rel="stylesheet" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="favicon.ico" />
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("sw.js");
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root">
+      <div class="panel">
+        <header>Jya</header>
+        <article>
+          <section class="inputs" aria-label="Triangle inputs">
+            <div class="input-grid">
+              <label class="field">
+                <span class="field-label">Side <em>a</em></span>
+                <input
+                  class="input"
+                  id="input-a"
+                  data-key="a"
+                  type="number"
+                  step="any"
+                  min="0"
+                  inputmode="decimal"
+                  autocomplete="off"
+                />
+              </label>
+              <label class="field">
+                <span class="field-label">Angle <em>A</em><span class="unit">°</span></span>
+                <input
+                  class="input"
+                  id="input-A"
+                  data-key="A"
+                  type="number"
+                  step="any"
+                  min="0"
+                  max="180"
+                  inputmode="decimal"
+                  autocomplete="off"
+                />
+              </label>
+              <label class="field">
+                <span class="field-label">Side <em>b</em></span>
+                <input
+                  class="input"
+                  id="input-b"
+                  data-key="b"
+                  type="number"
+                  step="any"
+                  min="0"
+                  inputmode="decimal"
+                  autocomplete="off"
+                />
+              </label>
+              <label class="field">
+                <span class="field-label">Angle <em>B</em><span class="unit">°</span></span>
+                <input
+                  class="input"
+                  id="input-B"
+                  data-key="B"
+                  type="number"
+                  step="any"
+                  min="0"
+                  max="180"
+                  inputmode="decimal"
+                  autocomplete="off"
+                />
+              </label>
+              <label class="field">
+                <span class="field-label">Side <em>c</em></span>
+                <input
+                  class="input"
+                  id="input-c"
+                  data-key="c"
+                  type="number"
+                  step="any"
+                  min="0"
+                  inputmode="decimal"
+                  autocomplete="off"
+                />
+              </label>
+              <label class="field">
+                <span class="field-label">Angle <em>C</em><span class="unit">°</span></span>
+                <input
+                  class="input"
+                  id="input-C"
+                  data-key="C"
+                  type="number"
+                  step="any"
+                  min="0"
+                  max="180"
+                  inputmode="decimal"
+                  autocomplete="off"
+                />
+              </label>
+            </div>
+            <div class="controls">
+              <label class="right-toggle">
+                <input type="checkbox" id="right-toggle" />
+                <span>Right triangle (locks <em>C</em> = 90°)</span>
+              </label>
+              <button class="command outline" id="clear-btn" type="button">Clear</button>
+            </div>
+          </section>
+
+          <section class="results" id="results" aria-live="polite">
+            <p class="hint" id="status-hint">Enter at least three values (including one side).</p>
+            <div class="result-cards" id="result-cards" hidden></div>
+          </section>
+        </article>
+        <footer><span class="footer-hint" id="footer-hint"></span></footer>
+      </div>
+    </div>
+    <script type="module" src="ui.js"></script>
+  </body>
+</html>

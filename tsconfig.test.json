@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "module": "commonjs",
     "types": ["jest"]
   },
   "include": ["solver.ts", "solver.test.ts"]

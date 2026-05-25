@@ -1,10 +1,11 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "strict": true,
     "strictNullChecks": true,
     "lib": ["ES2017", "DOM"],
     "target": "ES2017"
   },
-  "files": ["solver.ts", "ui.ts", "triangle-svg.ts"]
+  "files": ["solver.ts", "ui.ts"]
 }
