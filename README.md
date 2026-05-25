@@ -1,0 +1,59 @@
+# Jya
+
+Offline trigonometry triangle solver. Enter any three values of a triangle
+(sides `a, b, c` and angles `A, B, C`, where side `a` is opposite angle `A`)
+and Jya fills in the rest — area, perimeter, altitudes, inradius,
+circumradius, and triangle type included.
+
+## Why "Jya"?
+
+*Jyā* (ज्या) is the Sanskrit word from Aryabhata's astronomical text *Āryabhaṭīya*
+(c. 500 CE) for the geometric concept we now call **sine**. When the term
+traveled through Arabic as *jiba* (and was misread as *jaib*, meaning "fold"
+or "bay"), it was eventually Latinised to *sinus* — hence English "sine".
+
+So "sine" is, etymologically, a centuries-long mistranslation of *jyā*. This
+app keeps the original name.
+
+## Features
+
+- **Five solving cases** — SSS, SAS, ASA, AAS, SSA (with full handling of the
+  ambiguous two-solution case).
+- **Right-triangle mode** — toggle locks `C = 90°` and labels the method as
+  Pythagoras.
+- **Live recompute** — every keystroke recalculates; user-given values are
+  bolded, computed values are italic/dimmed so the source of each number is
+  obvious at a glance.
+- **SVG visualization** — every solution renders as a scaled, labeled triangle
+  diagram. For ambiguous SSA, both candidate triangles render in side-by-side
+  cards.
+- **Derived quantities** — area, perimeter, altitudes from each vertex,
+  inradius, circumradius, equilateral/isoceles/scalene + acute/right/obtuse.
+- **Click-to-copy** — click any computed value to copy the full-precision raw
+  number to the clipboard.
+- **Configurable precision** — 2–6 decimal places of display precision.
+- **Fully offline** — installable PWA with a cache-first service worker.
+
+## Solving outcomes
+
+The solver returns one of:
+
+| Kind              | Meaning                                                      |
+| ----------------- | ------------------------------------------------------------ |
+| `unique`          | Exactly one triangle matches.                                |
+| `ambiguous`       | SSA produced two valid triangles; both are returned.         |
+| `underdetermined` | Fewer than three values, or three values without a side.     |
+| `inconsistent`    | More than three values given, and they disagree.             |
+| `impossible`      | Triangle inequality violated, angle sum ≥ 180°, or similar.  |
+
+## Develop
+
+```
+npm install
+npm run dev      # tsc -w + sass -w + live-server
+npm test         # jest (33 tests)
+npm run build    # tsc + sass compressed
+```
+
+All angles are in degrees externally. The solver is in `solver.ts` and has
+no DOM dependencies — it's a pure function suitable for unit testing.

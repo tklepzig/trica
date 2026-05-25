@@ -4,22 +4,35 @@ import { renderTriangleSVG } from "./triangle-svg.js";
 const ALL_KEYS: Key[] = ["a", "b", "c", "A", "B", "C"];
 const ANGLE_KEYS: Key[] = ["A", "B", "C"];
 
-const numberFormatter = new Intl.NumberFormat(navigator.language, {
-  maximumFractionDigits: 4,
-  useGrouping: false,
-});
-
-function formatNumber(value: number): string {
-  return numberFormatter.format(value);
-}
-
 type State = {
   rightTriangle: boolean;
+  precision: number;
 };
 
 const state: State = {
   rightTriangle: false,
+  precision: 4,
 };
+
+function formatNumber(value: number): string {
+  return new Intl.NumberFormat(navigator.language, {
+    maximumFractionDigits: state.precision,
+    useGrouping: false,
+  }).format(value);
+}
+
+function attachCopyHandler(element: HTMLElement, rawValue: string): void {
+  element.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(rawValue);
+      element.classList.add("copied");
+      window.setTimeout(() => element.classList.remove("copied"), 700);
+    } catch {
+      // Clipboard API unavailable (insecure context, etc.) — silently no-op.
+    }
+  });
+  element.title = "Click to copy";
+}
 
 function getInputs(): Record<Key, HTMLInputElement> {
   const map = {} as Record<Key, HTMLInputElement>;
@@ -118,8 +131,10 @@ function renderTriangleCard(
     const valueEl = document.createElement("span");
     valueEl.className = "value";
     const isAngle = ANGLE_KEYS.includes(key);
-    const formatted = formatNumber(triangle[key]) + (isAngle ? "°" : "");
+    const rawNumber = triangle[key];
+    const formatted = formatNumber(rawNumber) + (isAngle ? "°" : "");
     valueEl.textContent = formatted + (given[key] ? "  ✓" : "");
+    attachCopyHandler(valueEl, String(rawNumber));
     row.appendChild(keyEl);
     row.appendChild(valueEl);
     card.appendChild(row);
@@ -127,17 +142,17 @@ function renderTriangleCard(
 
   const derivedBlock = document.createElement("div");
   derivedBlock.className = "derived";
-  const derivedRows: Array<[string, string]> = [
-    ["Area", formatNumber(derived.area)],
-    ["Perimeter", formatNumber(derived.perimeter)],
+  const derivedRows: Array<[string, string, string?]> = [
+    ["Area", formatNumber(derived.area), String(derived.area)],
+    ["Perimeter", formatNumber(derived.perimeter), String(derived.perimeter)],
     ["Type", describeType(derived)],
-    ["Altitude from a", formatNumber(derived.altitudes.a)],
-    ["Altitude from b", formatNumber(derived.altitudes.b)],
-    ["Altitude from c", formatNumber(derived.altitudes.c)],
-    ["Inradius", formatNumber(derived.inradius)],
-    ["Circumradius", formatNumber(derived.circumradius)],
+    ["Altitude from a", formatNumber(derived.altitudes.a), String(derived.altitudes.a)],
+    ["Altitude from b", formatNumber(derived.altitudes.b), String(derived.altitudes.b)],
+    ["Altitude from c", formatNumber(derived.altitudes.c), String(derived.altitudes.c)],
+    ["Inradius", formatNumber(derived.inradius), String(derived.inradius)],
+    ["Circumradius", formatNumber(derived.circumradius), String(derived.circumradius)],
   ];
-  derivedRows.forEach(([label, value]) => {
+  derivedRows.forEach(([label, value, rawValue]) => {
     const row = document.createElement("div");
     row.className = "derived-row";
     const keyEl = document.createElement("span");
@@ -146,6 +161,7 @@ function renderTriangleCard(
     const valueEl = document.createElement("span");
     valueEl.className = "value";
     valueEl.textContent = value;
+    if (rawValue !== undefined) attachCopyHandler(valueEl, rawValue);
     row.appendChild(keyEl);
     row.appendChild(valueEl);
     derivedBlock.appendChild(row);
@@ -277,6 +293,12 @@ function attachListeners(): void {
       inputs.C.classList.remove("is-locked");
       if (inputs.C.value === "90") inputs.C.value = "";
     }
+    recompute();
+  });
+
+  const precisionSelect = document.getElementById("precision-select") as HTMLSelectElement;
+  precisionSelect.addEventListener("change", () => {
+    state.precision = Number(precisionSelect.value);
     recompute();
   });
 

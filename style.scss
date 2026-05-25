@@ -99,12 +99,34 @@ body {
 
 .controls {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: var(--spacing);
 
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
+  }
+}
+
+.precision-control {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--text-sm);
+
+  select {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+}
+
+.result-row .value,
+.derived-row .value {
+  cursor: copy;
+  transition: color 0.15s ease;
+
+  &.copied {
+    color: oklch(0.85 0.18 140);
   }
 }
 
