@@ -1,9 +1,8 @@
 # Nisaba
 
-Offline trigonometry triangle solver. Enter any three values of a triangle
-(sides `a, b, c` and angles `A, B, C`, where side `a` is opposite angle `A`)
-and Nisaba fills in the rest — area, perimeter, altitudes, inradius,
-circumradius, and triangle type included.
+Offline trigonometry triangle solver. **Math core only at the moment** —
+the UI was deliberately stripped and will be rebuilt from scratch later.
+What remains is the solver, its tests, and the PWA shell.
 
 ## Why "Nisaba"?
 
@@ -20,45 +19,25 @@ calculated an area, or laid out the foundation of a building.
 
 This app is a small modern continuation of her domain.
 
-## Features
+## What's in here
 
-- **Five solving cases** — SSS, SAS, ASA, AAS, SSA (with full handling of the
-  ambiguous two-solution case).
-- **Right-triangle mode** — toggle locks `C = 90°` and labels the method as
-  Pythagoras.
-- **Live recompute** — every keystroke recalculates; user-given values are
-  bolded, computed values are italic/dimmed so the source of each number is
-  obvious at a glance.
-- **SVG visualization** — every solution renders as a scaled, labeled triangle
-  diagram. For ambiguous SSA, both candidate triangles render in side-by-side
-  cards.
-- **Derived quantities** — area, perimeter, altitudes from each vertex,
-  inradius, circumradius, equilateral/isoceles/scalene + acute/right/obtuse.
-- **Click-to-copy** — click any computed value to copy the full-precision raw
-  number to the clipboard.
-- **Configurable precision** — 2–6 decimal places of display precision.
-- **Fully offline** — installable PWA with a cache-first service worker.
-
-## Solving outcomes
-
-The solver returns one of:
-
-| Kind              | Meaning                                                      |
-| ----------------- | ------------------------------------------------------------ |
-| `unique`          | Exactly one triangle matches.                                |
-| `ambiguous`       | SSA produced two valid triangles; both are returned.         |
-| `underdetermined` | Fewer than three values, or three values without a side.     |
-| `inconsistent`    | More than three values given, and they disagree.             |
-| `impossible`      | Triangle inequality violated, angle sum ≥ 180°, or similar.  |
+- `solver.ts` — pure TypeScript triangle solver: SSS, SAS, ASA, AAS, SSA
+  (including the ambiguous two-solution case), AAA underdetermined,
+  right-triangle Pythagoras. Returns `unique | ambiguous | underdetermined
+  | inconsistent | impossible` and derived quantities (area, perimeter,
+  altitudes, inradius, circumradius, equilateral/isoceles/scalene + acute/
+  right/obtuse).
+- `solver.test.ts` — 33 Jest tests, all green.
+- `index.html`, `manifest.webmanifest`, `sw.js`, `favicon.svg` — PWA shell.
+  Installable, cache-first; will become useful once a UI is reattached.
 
 ## Develop
 
 ```
 npm install
-npm run dev      # tsc -w + sass -w + live-server
 npm test         # jest (33 tests)
-npm run build    # tsc + sass compressed
+npm run build    # tsc
 ```
 
-All angles are in degrees externally. The solver is in `solver.ts` and has
-no DOM dependencies — it's a pure function suitable for unit testing.
+All angles are in degrees externally. The solver has no DOM dependencies —
+pure function, suitable for any UI layer.

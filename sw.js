@@ -4,15 +4,12 @@
 // locally too since the literal name is stable).
 var CACHE_NAME = "nisaba-cache-__BUILD_ID__";
 
+// Shell-only for now — UI assets will be added back when a UI is reattached.
 var urlsToCache = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./favicon.svg",
-  "./style.min.css",
-  "./solver.js",
-  "./ui.js",
-  "./triangle-svg.js",
 ];
 
 self.addEventListener("install", function (event) {

@@ -11,7 +11,6 @@
       content="user-scalable=yes, initial-scale=1.0, maximum-scale=10.0, width=device-width"
     />
     <title>Nisaba</title>
-    <link href="style.min.css" rel="stylesheet" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <script>
@@ -23,121 +22,7 @@
     </script>
   </head>
   <body>
-    <div id="root">
-      <div class="panel">
-        <header>Nisaba</header>
-        <article>
-          <section class="inputs" aria-label="Triangle inputs">
-            <div class="input-grid">
-              <label class="field">
-                <span class="field-label">Side <em>a</em></span>
-                <input
-                  class="input"
-                  id="input-a"
-                  data-key="a"
-                  type="number"
-                  step="any"
-                  min="0"
-                  inputmode="decimal"
-                  autocomplete="off"
-                />
-              </label>
-              <label class="field">
-                <span class="field-label">Angle <em>A</em><span class="unit">°</span></span>
-                <input
-                  class="input"
-                  id="input-A"
-                  data-key="A"
-                  type="number"
-                  step="any"
-                  min="0"
-                  max="180"
-                  inputmode="decimal"
-                  autocomplete="off"
-                />
-              </label>
-              <label class="field">
-                <span class="field-label">Side <em>b</em></span>
-                <input
-                  class="input"
-                  id="input-b"
-                  data-key="b"
-                  type="number"
-                  step="any"
-                  min="0"
-                  inputmode="decimal"
-                  autocomplete="off"
-                />
-              </label>
-              <label class="field">
-                <span class="field-label">Angle <em>B</em><span class="unit">°</span></span>
-                <input
-                  class="input"
-                  id="input-B"
-                  data-key="B"
-                  type="number"
-                  step="any"
-                  min="0"
-                  max="180"
-                  inputmode="decimal"
-                  autocomplete="off"
-                />
-              </label>
-              <label class="field">
-                <span class="field-label">Side <em>c</em></span>
-                <input
-                  class="input"
-                  id="input-c"
-                  data-key="c"
-                  type="number"
-                  step="any"
-                  min="0"
-                  inputmode="decimal"
-                  autocomplete="off"
-                />
-              </label>
-              <label class="field">
-                <span class="field-label">Angle <em>C</em><span class="unit">°</span></span>
-                <input
-                  class="input"
-                  id="input-C"
-                  data-key="C"
-                  type="number"
-                  step="any"
-                  min="0"
-                  max="180"
-                  inputmode="decimal"
-                  autocomplete="off"
-                />
-              </label>
-            </div>
-            <div class="controls">
-              <label class="right-toggle">
-                <input type="checkbox" id="right-toggle" />
-                <span>Right triangle (locks <em>C</em> = 90°)</span>
-              </label>
-              <label class="precision-control">
-                <span>Precision</span>
-                <select id="precision-select" class="input">
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4" selected>4</option>
-                  <option value="5">5</option>
-                  <option value="6">6</option>
-                </select>
-              </label>
-              <button class="command outline" id="clear-btn" type="button">Clear</button>
-            </div>
-          </section>
-
-          <section class="results" id="results" aria-live="polite">
-            <p class="hint" id="status-hint">Enter at least three values (including one side).</p>
-            <div class="result-cards" id="result-cards" hidden></div>
-          </section>
-        </article>
-        <footer><span class="footer-hint" id="footer-hint"></span></footer>
-      </div>
-    </div>
-    <script type="module" src="ui.js"></script>
+    <!-- UI intentionally absent. Solver lives in solver.ts and is fully tested;
+         a UI will be reattached later. -->
   </body>
 </html>

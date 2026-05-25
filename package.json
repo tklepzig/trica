@@ -5,11 +5,9 @@
   "description": "Offline trigonometry triangle solver. Named after Nisaba, the Sumerian goddess of writing, accounting, and measurement.",
   "scripts": {
     "start": "npx --yes live-server .",
-    "build": "tsc && sass --load-path=node_modules --quiet-deps style.scss:style.min.css -s compressed --no-source-map",
+    "build": "tsc",
     "test": "tsc -p tsconfig.test.json --noEmit && npx --yes jest",
-    "dev": "npx --yes concurrently -n tsc,sass,server -c cyan,magenta,green \"npm run tsc:watch\" \"npm run style:watch\" \"npm run start\"",
-    "tsc:watch": "tsc -w",
-    "style:watch": "sass --load-path=node_modules --quiet-deps --watch style.scss:style.min.css -s compressed"
+    "dev": "tsc -w"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
