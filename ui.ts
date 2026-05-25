@@ -1,4 +1,5 @@
 import { solve, SolveResult, Triangle, Derived, Key, GivenSet } from "./solver.js";
+import { renderTriangleSVG } from "./triangle-svg.js";
 
 const ALL_KEYS: Key[] = ["a", "b", "c", "A", "B", "C"];
 const ANGLE_KEYS: Key[] = ["A", "B", "C"];
@@ -102,6 +103,11 @@ function renderTriangleCard(
   badge.className = "method-badge";
   badge.textContent = formatMethodLabel(method, given);
   card.appendChild(badge);
+
+  const svgWrapper = document.createElement("div");
+  svgWrapper.className = "triangle-svg-wrapper";
+  svgWrapper.innerHTML = renderTriangleSVG(triangle);
+  card.appendChild(svgWrapper);
 
   ALL_KEYS.forEach((key) => {
     const row = document.createElement("div");

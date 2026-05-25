@@ -219,6 +219,45 @@ body {
   }
 }
 
+.triangle-svg-wrapper {
+  display: grid;
+  justify-items: center;
+  padding: var(--spacing-sm);
+
+  .triangle-svg {
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+  }
+
+  .triangle-shape {
+    fill: oklch(var(--500) / 0.15);
+    stroke: oklch(var(--400) / 0.9);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+
+  .vertex-dot {
+    fill: oklch(var(--300) / 1);
+  }
+
+  .side-label {
+    font-size: 14px;
+    fill: oklch(0.92 0.05 220);
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-family: "Source Code Pro", ui-monospace, monospace;
+  }
+
+  .angle-label {
+    font-size: 12px;
+    fill: oklch(0.75 0.06 180);
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-style: italic;
+  }
+}
+
 .method-badge {
   justify-self: start;
   font-size: var(--text-xs);
