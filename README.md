@@ -1,19 +1,24 @@
-# Jya
+# Nisaba
 
 Offline trigonometry triangle solver. Enter any three values of a triangle
 (sides `a, b, c` and angles `A, B, C`, where side `a` is opposite angle `A`)
-and Jya fills in the rest — area, perimeter, altitudes, inradius,
+and Nisaba fills in the rest — area, perimeter, altitudes, inradius,
 circumradius, and triangle type included.
 
-## Why "Jya"?
+## Why "Nisaba"?
 
-*Jyā* (ज्या) is the Sanskrit word from Aryabhata's astronomical text *Āryabhaṭīya*
-(c. 500 CE) for the geometric concept we now call **sine**. When the term
-traveled through Arabic as *jiba* (and was misread as *jaib*, meaning "fold"
-or "bay"), it was eventually Latinised to *sinus* — hence English "sine".
+Nisaba (𒀭𒉀) is one of the oldest documented deities of the Sumerian
+pantheon, dating back to at least the early third millennium BCE. Originally
+a goddess of grain, she became the patron of writing, accounting, surveying,
+and mathematics — depicted holding the measuring rod and the lapis-lazuli
+tablet on which the proportions of fields and temples were inscribed.
 
-So "sine" is, etymologically, a centuries-long mistranslation of *jyā*. This
-app keeps the original name.
+Every Sumerian scribal exercise tablet ended with the doxology *"praise to
+Nisaba."* For more than two thousand years she was, in effect, the goddess
+of applied geometry — the patron of every person who measured a field,
+calculated an area, or laid out the foundation of a building.
+
+This app is a small modern continuation of her domain.
 
 ## Features
 

@@ -2,7 +2,7 @@
 // serves cache-first thereafter. Bump CACHE_NAME on any deploy to invalidate
 // the old cache (CI replaces __BUILD_ID__ with the commit SHA; works fine
 // locally too since the literal name is stable).
-var CACHE_NAME = "jya-cache-__BUILD_ID__";
+var CACHE_NAME = "nisaba-cache-__BUILD_ID__";
 
 var urlsToCache = [
   "./",

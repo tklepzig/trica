@@ -1,8 +1,8 @@
 {
-  "name": "jya",
+  "name": "nisaba",
   "version": "0.1.0",
   "type": "module",
-  "description": "Offline trigonometry triangle solver. Named after jyā, the Sanskrit word that 'sine' is a (long) mistranslation of.",
+  "description": "Offline trigonometry triangle solver. Named after Nisaba, the Sumerian goddess of writing, accounting, and measurement.",
   "scripts": {
     "start": "npx --yes live-server .",
     "build": "tsc && sass --load-path=node_modules --quiet-deps style.scss:style.min.css -s compressed --no-source-map",
