@@ -1,0 +1,22 @@
+{
+  "name": "jya",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Offline trigonometry triangle solver. Named after jyā, the Sanskrit word that 'sine' is a (long) mistranslation of.",
+  "scripts": {
+    "start": "npx --yes live-server .",
+    "build": "tsc && sass --load-path=node_modules --quiet-deps style.scss:style.min.css -s compressed --no-source-map",
+    "test": "tsc -p tsconfig.test.json --noEmit && npx --yes jest",
+    "dev": "npx --yes concurrently -n tsc,sass,server -c cyan,magenta,green \"npm run tsc:watch\" \"npm run style:watch\" \"npm run start\"",
+    "tsc:watch": "tsc -w",
+    "style:watch": "sass --load-path=node_modules --quiet-deps --watch style.scss:style.min.css -s compressed"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.7.0",
+    "ada-ui": "^6.0.1",
+    "sass": "^1.99.0",
+    "ts-jest": "^29.4.9",
+    "typescript": "^6.0.3"
+  }
+}
