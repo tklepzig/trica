@@ -1,8 +1,8 @@
 {
-  "name": "nisaba",
+  "name": "trica",
   "version": "0.1.0",
   "type": "module",
-  "description": "Offline trigonometry triangle solver. Named after Nisaba, the Sumerian goddess of writing, accounting, and measurement.",
+  "description": "Offline trigonometry triangle solver. Trica = TRIgonometry CAlculation.",
   "scripts": {
     "start": "npx --yes live-server .",
     "build": "tsc",
