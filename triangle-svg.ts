@@ -162,7 +162,8 @@ function angleAnnotation(
   const length = Math.hypot(bx, by) || 1;
   bx /= length;
   by /= length;
-  const distance = right ? 30 : 34;
+  // Sit well inside along the bisector so the value clears the two edges.
+  const distance = right ? 36 : 46;
   const labelX = corner.x + bx * distance;
   const labelY = corner.y + by * distance;
   const label = `<text x="${labelX.toFixed(1)}" y="${labelY.toFixed(
@@ -174,16 +175,41 @@ function angleAnnotation(
   return marker + label;
 }
 
-// Faint placeholder shown before anything is solved.
+// A vertex letter, placed just outside the triangle (away from the centroid).
+function vertexLabel(point: Point, center: Point, key: string): string {
+  const at = outward(point, center, 22);
+  return `<text x="${at.x.toFixed(1)}" y="${at.y.toFixed(
+    1,
+  )}" class="tri-vertex-label" text-anchor="middle" dominant-baseline="middle">${key}</text>`;
+}
+
+// A side label (letter, optionally with a value), placed outside the edge.
+function sideLabel(p1: Point, p2: Point, center: Point, text: string): string {
+  const at = outward(midpoint(p1, p2), center, 20);
+  return `<text x="${at.x.toFixed(1)}" y="${at.y.toFixed(
+    1,
+  )}" class="tri-side-label" text-anchor="middle" dominant-baseline="middle">${text}</text>`;
+}
+
+// Placeholder shown before anything is solved: a reference triangle that names
+// where the sides (a, b, c) and vertices (A, B, C) sit, matching the solved
+// layout (C apex, A bottom-left, B bottom-right; side a opposite vertex A …).
 export function placeholderSvg(): string {
   const p = PADDING + 8;
-  const apex = { x: VIEW / 2, y: p };
-  const left = { x: p, y: VIEW - p };
-  const right = { x: VIEW - p, y: VIEW - p };
+  const apexC = { x: VIEW / 2, y: p };
+  const leftA = { x: p, y: VIEW - p };
+  const rightB = { x: VIEW - p, y: VIEW - p };
+  const center = centroid(apexC, leftA, rightB);
   return [
-    `<svg viewBox="0 0 ${VIEW} ${VIEW}" xmlns="http://www.w3.org/2000/svg" class="tri tri-placeholder" role="img" aria-label="No triangle yet">`,
-    `<polygon points="${apex.x},${apex.y} ${left.x},${left.y} ${right.x},${right.y}" class="tri-edge" />`,
-    `<text x="${VIEW / 2}" y="${VIEW / 2 + 28}" class="tri-hint" text-anchor="middle">Werte eingeben</text>`,
+    `<svg viewBox="0 0 ${VIEW} ${VIEW}" xmlns="http://www.w3.org/2000/svg" class="tri tri-placeholder" role="img" aria-label="Noch kein Dreieck – Beschriftung">`,
+    `<polygon points="${apexC.x},${apexC.y} ${leftA.x},${leftA.y} ${rightB.x},${rightB.y}" class="tri-edge" />`,
+    sideLabel(rightB, apexC, center, "a"),
+    sideLabel(leftA, apexC, center, "b"),
+    sideLabel(leftA, rightB, center, "c"),
+    vertexLabel(apexC, center, "C"),
+    vertexLabel(leftA, center, "A"),
+    vertexLabel(rightB, center, "B"),
+    `<text x="${VIEW / 2}" y="${VIEW / 2 + 30}" class="tri-hint" text-anchor="middle">Werte eingeben</text>`,
     `</svg>`,
   ].join("");
 }
@@ -194,23 +220,6 @@ export function triangleSvg(triangle: Triangle): string {
   const { A, B, C } = fitted;
   const center = centroid(A, B, C);
 
-  const vertexLabel = (point: Point, key: string): string => {
-    const at = outward(point, center, 22);
-    return `<text x="${at.x.toFixed(1)}" y="${at.y.toFixed(
-      1,
-    )}" class="tri-vertex-label" text-anchor="middle" dominant-baseline="middle">${key}</text>`;
-  };
-
-  // Side a is opposite vertex A → the edge between B and C, etc.
-  const sideLabel = (p1: Point, p2: Point, key: string, value: number): string => {
-    const at = outward(midpoint(p1, p2), center, 20);
-    return `<text x="${at.x.toFixed(1)}" y="${at.y.toFixed(
-      1,
-    )}" class="tri-side-label" text-anchor="middle" dominant-baseline="middle">${key}=${formatLabel(
-      value,
-    )}</text>`;
-  };
-
   // Angle markers (arc or right-angle square) + the degree value at each vertex.
   const markers: string[] = [
     angleAnnotation(A, B, C, triangle.A),
@@ -219,17 +228,18 @@ export function triangleSvg(triangle: Triangle): string {
   ];
 
   return [
-    `<svg viewBox="0 0 ${VIEW} ${VIEW}" xmlns="http://www.w3.org/2000/svg" class="tri" role="img" aria-label="Solved triangle">`,
+    `<svg viewBox="0 0 ${VIEW} ${VIEW}" xmlns="http://www.w3.org/2000/svg" class="tri" role="img" aria-label="Gelöstes Dreieck">`,
     `<polygon points="${A.x.toFixed(1)},${A.y.toFixed(1)} ${B.x.toFixed(
       1,
     )},${B.y.toFixed(1)} ${C.x.toFixed(1)},${C.y.toFixed(1)}" class="tri-face" />`,
     ...markers,
-    sideLabel(B, C, "a", triangle.a),
-    sideLabel(A, C, "b", triangle.b),
-    sideLabel(A, B, "c", triangle.c),
-    vertexLabel(A, "A"),
-    vertexLabel(B, "B"),
-    vertexLabel(C, "C"),
+    // Side a is opposite vertex A → the edge between B and C, etc.
+    sideLabel(B, C, center, `a=${formatLabel(triangle.a)}`),
+    sideLabel(A, C, center, `b=${formatLabel(triangle.b)}`),
+    sideLabel(A, B, center, `c=${formatLabel(triangle.c)}`),
+    vertexLabel(A, center, "A"),
+    vertexLabel(B, center, "B"),
+    vertexLabel(C, center, "C"),
     `</svg>`,
   ].join("");
 }
