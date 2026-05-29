@@ -77,6 +77,16 @@ function givenCount(input: TriangleInput): number {
   return KEYS.filter((key) => input[key] !== undefined).length;
 }
 
+// Enable the (mobile) Solve button only once there's enough to solve: at least
+// 3 user-given values including at least one side — the same gate the solver
+// uses before it stops returning "underdetermined".
+function updateSolveButton(): void {
+  const input = readInput();
+  const hasSide =
+    input.a !== undefined || input.b !== undefined || input.c !== undefined;
+  solveButton.disabled = !(givenCount(input) >= 3 && hasSide);
+}
+
 // --- rendering ------------------------------------------------------------
 
 function clearFieldDecorations(): void {
@@ -301,6 +311,7 @@ inputs.forEach((element) => {
   element.addEventListener("input", () => {
     element.removeAttribute("data-computed");
     element.classList.remove("warn");
+    updateSolveButton();
   });
 
   // Enter solves immediately.
@@ -330,6 +341,7 @@ clearButton.addEventListener("click", () => {
     element.classList.remove("warn");
   });
   showEmptyState();
+  updateSolveButton();
   inputs.get("a")?.focus();
 });
 
@@ -342,3 +354,4 @@ themeButton.addEventListener("click", () => {
 
 // Initial paint.
 showEmptyState();
+updateSolveButton();
