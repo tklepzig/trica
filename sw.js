@@ -4,12 +4,20 @@
 // locally too since the literal name is stable).
 var CACHE_NAME = "trica-cache-__BUILD_ID__";
 
-// Shell-only for now — UI assets will be added back when a UI is reattached.
+// App shell + UI assets. Relative paths resolve against the SW location, so
+// they work on a GitHub Pages subpath too. The compiled JS (tsc) and CSS (sass)
+// are built by CI before deploy (they're gitignored, not committed). The font
+// is self-hosted (same-origin) so cache.addAll stays atomic and truly offline.
 var urlsToCache = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./favicon.svg",
+  "./style.min.css",
+  "./ui.js",
+  "./solver.js",
+  "./triangle-svg.js",
+  "./assets/fonts/open-sans-latin.woff2",
 ];
 
 self.addEventListener("install", function (event) {
