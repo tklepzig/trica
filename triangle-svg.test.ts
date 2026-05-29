@@ -110,9 +110,11 @@ describe("triangleSvg", () => {
 });
 
 describe("placeholderSvg", () => {
-  it("renders the empty-state hint", () => {
+  it("renders a labelled reference triangle", () => {
     const svg = placeholderSvg();
     expect(svg).toContain("tri-placeholder");
-    expect(svg).toContain("Werte eingeben");
+    // Vertices and sides are named so the layout is clear before any input.
+    expect(svg).toContain(">A</text>");
+    expect(svg).toContain(">a</text>");
   });
 });

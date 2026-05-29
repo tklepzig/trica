@@ -58,21 +58,14 @@ body {
 @media (min-width: 640px) {
   .layout {
     grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
-    grid-template-areas:
-      "inputs diagram"
-      "results results";
     // Inputs and diagram share the top row and stretch to the same height, so
-    // they align — without the inputs panel having to reach a tall results row.
+    // they align. Results is auto-placed onto a second row spanning both
+    // columns — and ONLY when present, so a hidden results panel doesn't
+    // reserve a row + gap that would make the stretched rail overshoot.
     align-items: stretch;
   }
-  .inputs {
-    grid-area: inputs;
-  }
-  .diagram {
-    grid-area: diagram;
-  }
   .results {
-    grid-area: results;
+    grid-column: 1 / -1;
   }
 
   // Two columns of inputs on desktop: Seiten beside Winkel.
@@ -86,9 +79,6 @@ body {
   // column (Winkel) isn't pushed down — they share rows with Seiten instead.
   .inputs > article > .group + .group {
     margin-top: 0;
-  }
-  .inputs .status {
-    grid-column: 1 / -1;
   }
 }
 
@@ -114,7 +104,7 @@ body {
 
 .field {
   display: grid;
-  grid-template-columns: 1.75rem minmax(0, 1fr) 2.75rem;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
   align-items: center;
   gap: var(--spacing-sm);
 }
@@ -147,23 +137,10 @@ body {
   opacity: 0.6;
 }
 
-// Computed (solver-filled) value: dimmed + italic, with an "auto" tag.
+// Computed (solver-filled) value: dimmed + italic is marker enough (no tag).
 .input[data-computed] {
   font-style: italic;
   opacity: 0.65;
-}
-
-.auto-tag {
-  justify-self: start;
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.55;
-  visibility: hidden;
-}
-
-.field:has(.input[data-computed]) .auto-tag {
-  visibility: visible;
 }
 
 // Error highlight: `warn` flips Ada's hue to the warn palette, so the .input
@@ -172,17 +149,10 @@ body {
   border-color: var(--color500);
 }
 
-.convention {
-  margin: 0;
-  opacity: 0.6;
-}
-
 // ---------------------------------------------------------------------------
-// Status line (below inputs)
+// Status line (result / hint, shown in the inputs panel footer)
 // ---------------------------------------------------------------------------
 .status {
-  margin: var(--spacing-lg) 0 0;
-  min-height: 1.3em;
   font-size: var(--text-sm);
   color: var(--fg-body);
   opacity: 0.75;
@@ -274,12 +244,6 @@ body {
   stroke-dasharray: 6 7;
 }
 
-.tri-hint {
-  fill: var(--color600);
-  font-size: 14px;
-  letter-spacing: 0.08em;
-}
-
 // ---------------------------------------------------------------------------
 // Results
 // ---------------------------------------------------------------------------
@@ -289,7 +253,7 @@ body {
 
 .result-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: var(--spacing);
   // Don't let a taller cell stretch the rest of its row.
   align-items: start;

@@ -31,7 +31,7 @@ KEYS.forEach((key) => {
   if (element) inputs.set(key, element);
 });
 
-const statusEl = document.getElementById("status") as HTMLParagraphElement;
+const statusEl = document.getElementById("status") as HTMLElement;
 const resultsPanel = document.getElementById("resultsPanel") as HTMLElement;
 const resultsEl = document.getElementById("results") as HTMLElement;
 const diagramEl = document.getElementById("diagram") as HTMLElement;
@@ -213,7 +213,7 @@ function run(): void {
       renderDiagram(result.triangle);
       renderResults(result.derived);
       setTriangleType(result.derived);
-      setStatus(`Dreieck bestimmt – ${methodLabelDe(result.method)}.`, false);
+      setStatus(methodLabelDe(result.method), false);
       break;
     }
     case "ambiguous": {

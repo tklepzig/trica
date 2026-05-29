@@ -214,7 +214,6 @@ export function placeholderSvg(): string {
     vertexLabel(apexC, center, "C"),
     vertexLabel(leftA, center, "A"),
     vertexLabel(rightB, center, "B"),
-    `<text x="${VIEW / 2}" y="${VIEW / 2 + 30}" class="tri-hint" text-anchor="middle">Werte eingeben</text>`,
     `</svg>`,
   ].join("");
 }
