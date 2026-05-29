@@ -347,9 +347,7 @@ clearButton.addEventListener("click", () => {
 
 themeButton.addEventListener("click", () => {
   const isLight = document.documentElement.classList.toggle("light-theme");
-  const nextLabel = isLight ? "Dunkel" : "Hell";
-  themeButton.setAttribute("data-label", nextLabel);
-  themeButton.setAttribute("data-abbr", nextLabel);
+  themeButton.textContent = isLight ? "Dark" : "Light";
 });
 
 // Initial paint.

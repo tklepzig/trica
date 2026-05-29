@@ -25,24 +25,13 @@
   </head>
   <body>
     <main class="app">
-      <header class="app-bar">
-        <div class="compound-commands">
-          <button
-            type="button"
-            class="command"
-            id="clear"
-            data-label="Löschen"
-            data-abbr="Lösch"
-          ></button>
-          <button
-            type="button"
-            class="command"
-            id="theme"
-            data-label="Hell"
-            data-abbr="Hell"
-          ></button>
-        </div>
-      </header>
+      <nav class="compound-commands vertical rail" aria-label="Aktionen">
+        <div class="spacer"></div>
+        <button type="button" class="command" id="solve" disabled>Calc</button>
+        <button type="button" class="command" id="clear">Clear</button>
+        <button type="button" class="command" id="theme">Light</button>
+        <div class="spacer"></div>
+      </nav>
 
       <div class="layout">
         <!-- Eingaben -->
@@ -143,15 +132,6 @@
                 <span class="auto-tag">auto</span>
               </div>
             </div>
-
-            <button
-              type="button"
-              class="command solve-mobile"
-              id="solve"
-              disabled
-            >
-              = Berechnen
-            </button>
 
             <p class="status" id="status" hidden></p>
           </article>

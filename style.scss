@@ -33,41 +33,40 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+// The command rail (Clear / Calc / theme) sits in its own column; the content
+// (layout) takes the rest.
 .app {
-  max-width: 56rem;
+  max-width: 62rem;
   margin: 0 auto;
   display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: var(--spacing);
+  align-items: start;
 }
 
-.app-bar {
+// Vertical Ada command rail, kept in view while the content scrolls.
+.rail {
   position: sticky;
-  top: 0;
-  z-index: 5;
-  display: grid;
-  justify-items: end;
-  padding: var(--padding-sm) 0;
-  background: var(--bg-body);
+  top: var(--spacing);
 }
 
 // ---------------------------------------------------------------------------
-// Layout: single column on mobile, inputs | (diagram / results) on desktop
+// Layout: single column on mobile; inputs | diagram on top, results below
 // ---------------------------------------------------------------------------
 .layout {
   display: grid;
   gap: var(--spacing);
   grid-template-columns: 1fr;
-  align-items: start;
 }
 
 @media (min-width: 640px) {
   .layout {
-    grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
     grid-template-areas:
       "inputs diagram"
-      "inputs results";
-    // Stretch so the left (Eingaben) panel's bottom lines up with the right
-    // column instead of floating short.
+      "results results";
+    // Inputs and diagram share the top row and stretch to the same height, so
+    // they align — without the inputs panel having to reach a tall results row.
     align-items: stretch;
   }
   .inputs {
@@ -78,6 +77,20 @@ body {
   }
   .results {
     grid-area: results;
+  }
+
+  // Two columns of inputs on desktop: Seiten beside Winkel.
+  .inputs > article {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--spacing-lg);
+    align-items: start;
+  }
+  .group + .group {
+    margin-top: 0;
+  }
+  .inputs .status {
+    grid-column: 1 / -1;
   }
 }
 
@@ -164,22 +177,6 @@ body {
 .convention {
   margin: 0;
   opacity: 0.6;
-}
-
-// Ada pins command labels bottom-right; for a full-width primary action,
-// centre the label instead.
-.solve-mobile {
-  width: 100%;
-  margin-top: var(--spacing-lg);
-  justify-items: center;
-  align-items: center;
-  text-align: center;
-}
-
-@media (min-width: 640px) {
-  .solve-mobile {
-    display: none;
-  }
 }
 
 // ---------------------------------------------------------------------------
