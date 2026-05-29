@@ -4,5 +4,11 @@
     "module": "commonjs",
     "types": ["jest"]
   },
-  "include": ["solver.ts", "solver.test.ts"]
+  "files": [],
+  "include": [
+    "solver.ts",
+    "solver.test.ts",
+    "triangle-svg.ts",
+    "triangle-svg.test.ts"
+  ]
 }
