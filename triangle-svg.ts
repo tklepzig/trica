@@ -162,8 +162,13 @@ function angleAnnotation(
   const length = Math.hypot(bx, by) || 1;
   bx /= length;
   by /= length;
-  // Sit well inside along the bisector so the value clears the two edges.
-  const distance = right ? 36 : 46;
+  // Sit far enough along the bisector that the value clears both edges. A
+  // narrow angle's edges nearly meet, so the label must sit deeper in — the
+  // edge clearance at distance d is d·sin(angle/2), so scale by 1/sin. Capped
+  // so it can't shoot past the opposite side on very sharp angles.
+  const halfAngle = Math.max(value / 2, 8) * DEG2RAD;
+  const clearance = 24 / Math.sin(halfAngle);
+  const distance = Math.min(80, Math.max(right ? 34 : 40, clearance));
   const labelX = corner.x + bx * distance;
   const labelY = corner.y + by * distance;
   const label = `<text x="${labelX.toFixed(1)}" y="${labelY.toFixed(
