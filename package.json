@@ -5,9 +5,12 @@
   "description": "Offline trigonometry triangle solver. Trica = TRIgonometry CAlculation.",
   "scripts": {
     "start": "npx --yes live-server .",
-    "build": "tsc",
+    "build": "tsc && sass --load-path=node_modules --quiet-deps style.scss:style.min.css -s compressed --no-source-map",
     "test": "tsc -p tsconfig.test.json --noEmit && npx --yes jest",
-    "dev": "tsc -w"
+    "dev": "npx --yes concurrently -n tsc,sass,server -c cyan,magenta,green \"npm run tsc:watch\" \"npm run style:watch\" \"npm run start\"",
+    "dev:no-sw": "npx --yes concurrently -n tsc,sass,server -c cyan,magenta,green \"npm run tsc:watch\" \"npm run style:watch\" \"npm run start -- --middleware=$PWD/scripts/disable-sw.js\"",
+    "tsc:watch": "tsc -w",
+    "style:watch": "sass --load-path=node_modules --quiet-deps --watch style.scss:style.min.css -s compressed"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
