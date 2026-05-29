@@ -15,6 +15,7 @@ import type {
   Derived,
   GivenSet,
   Key,
+  SolveMethod,
   Triangle,
   TriangleInput,
 } from "./solver.js";
@@ -117,6 +118,21 @@ const CLASSIFICATION_DE: Record<Derived["classification"], string> = {
   obtuse: "stumpfwinklig",
 };
 
+// The solver's method codes map to the German congruence-theorem (Kongruenzsatz)
+// abbreviations: SAS→SWS, ASA→WSW, AAS→SWW, SSA→SsW.
+const METHOD_DE: Record<Exclude<SolveMethod, "right-pythagoras">, string> = {
+  SSS: "SSS",
+  SAS: "SWS",
+  ASA: "WSW",
+  AAS: "SWW",
+  SSA: "SsW",
+};
+
+function methodLabelDe(method: SolveMethod): string {
+  if (method === "right-pythagoras") return "Satz des Pythagoras";
+  return `Kongruenzsatz ${METHOD_DE[method]}`;
+}
+
 function shapeLabel(derived: Derived): string {
   const shape = derived.isEquilateral
     ? "gleichseitig"
@@ -178,9 +194,7 @@ function run(): void {
       fillComputed(result.triangle, result.given);
       renderDiagram(result.triangle);
       renderResults(result.derived);
-      const method =
-        result.method === "right-pythagoras" ? "Pythagoras" : result.method;
-      setStatus(`Gelöst (${method}).`, false);
+      setStatus(`Dreieck bestimmt – ${methodLabelDe(result.method)}.`, false);
       break;
     }
     case "ambiguous": {
