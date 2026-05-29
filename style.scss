@@ -59,6 +59,21 @@ body {
   }
 }
 
+// Mobile: keep the command rail in view while the content column scrolls, so
+// Info / Light stay reachable without scrolling to the bottom of the page.
+// `align-self: start` stops it stretching to the (tall) content height; the
+// fixed viewport height lets the flex spacer keep Calc/Clear at the top and
+// Info/Light at the bottom. `dvh` tracks the mobile toolbar/keyboard so the
+// bottom buttons don't hide under the URL bar.
+@media (max-width: 639.98px) {
+  .rail {
+    position: sticky;
+    top: var(--spacing);
+    align-self: start;
+    height: calc(100dvh - 2 * var(--spacing));
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Layout: single column on mobile; inputs | diagram on top, results below
 // ---------------------------------------------------------------------------
