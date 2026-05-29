@@ -11,6 +11,7 @@
 
 import { solve } from "./solver.js";
 import type {
+  AngleKey,
   Derived,
   GivenSet,
   Key,
@@ -49,9 +50,9 @@ let selectedSolution = 0;
 
 // --- formatting -----------------------------------------------------------
 
-// Trim to 4 decimals, drop trailing zeros (e.g. 5.0000 -> "5", 4.2426 -> "4.2426").
+// Round to 2 decimals, drop trailing zeros (e.g. 5 -> "5", 44.4153 -> "44.42").
 function formatNumber(value: number): string {
-  return Number(value.toFixed(4)).toString();
+  return Number(value.toFixed(2)).toString();
 }
 
 // --- reading input --------------------------------------------------------
@@ -109,25 +110,32 @@ function setStatus(message: string, isError: boolean): void {
   statusEl.hidden = message === "";
 }
 
+// German labels for the solver's English classification terms.
+const CLASSIFICATION_DE: Record<Derived["classification"], string> = {
+  acute: "spitzwinklig",
+  right: "rechtwinklig",
+  obtuse: "stumpfwinklig",
+};
+
 function shapeLabel(derived: Derived): string {
   const shape = derived.isEquilateral
-    ? "equilateral"
+    ? "gleichseitig"
     : derived.isIsoceles
-      ? "isosceles"
-      : "scalene";
-  return `${derived.classification} · ${shape}`;
+      ? "gleichschenklig"
+      : "ungleichseitig";
+  return `${CLASSIFICATION_DE[derived.classification]} · ${shape}`;
 }
 
 function renderResults(derived: Derived): void {
   const cells: Array<[string, string]> = [
-    ["Area", formatNumber(derived.area)],
-    ["Perimeter", formatNumber(derived.perimeter)],
-    ["Type", shapeLabel(derived)],
-    ["Height a", formatNumber(derived.altitudes.a)],
-    ["Height b", formatNumber(derived.altitudes.b)],
-    ["Height c", formatNumber(derived.altitudes.c)],
-    ["Inradius", formatNumber(derived.inradius)],
-    ["Circumradius", formatNumber(derived.circumradius)],
+    ["Fläche", formatNumber(derived.area)],
+    ["Umfang", formatNumber(derived.perimeter)],
+    ["Typ", shapeLabel(derived)],
+    ["Höhe a", formatNumber(derived.altitudes.a)],
+    ["Höhe b", formatNumber(derived.altitudes.b)],
+    ["Höhe c", formatNumber(derived.altitudes.c)],
+    ["Inkreisradius", formatNumber(derived.inradius)],
+    ["Umkreisradius", formatNumber(derived.circumradius)],
   ];
   resultsEl.innerHTML = cells
     .map(
@@ -170,7 +178,9 @@ function run(): void {
       fillComputed(result.triangle, result.given);
       renderDiagram(result.triangle);
       renderResults(result.derived);
-      setStatus(`Solved (${result.method}).`, false);
+      const method =
+        result.method === "right-pythagoras" ? "Pythagoras" : result.method;
+      setStatus(`Gelöst (${method}).`, false);
       break;
     }
     case "ambiguous": {
@@ -182,14 +192,26 @@ function run(): void {
       selectedSolution = 0;
       solutionToggle.hidden = false;
       renderSolution();
-      setStatus("Two triangles fit (ambiguous SSA). Pick a solution.", false);
+      setStatus("Zwei Dreiecke möglich – wähle eine Lösung.", false);
       break;
     }
     case "underdetermined": {
       // Normal in-progress state, NOT an error — keep it quiet.
       resultsPanel.hidden = true;
       renderDiagram(null);
-      setStatus(result.reason, false);
+      const onlyAngles =
+        result.given.A &&
+        result.given.B &&
+        result.given.C &&
+        !result.given.a &&
+        !result.given.b &&
+        !result.given.c;
+      setStatus(
+        onlyAngles
+          ? "Form bekannt, aber keine Größe – gib mindestens eine Seite an."
+          : "Bitte mehr Werte eingeben (mindestens 3, davon eine Seite).",
+        false,
+      );
       break;
     }
     case "inconsistent": {
@@ -198,14 +220,31 @@ function run(): void {
       if (result.mismatch) {
         const offending = inputs.get(result.mismatch);
         if (offending) offending.classList.add("warn");
+        setStatus(
+          `Wert für ${result.mismatch} passt nicht zu den übrigen Eingaben.`,
+          true,
+        );
+      } else {
+        setStatus("Die gegebenen Winkel ergeben in Summe nicht 180°.", true);
       }
-      setStatus(result.reason, true);
       break;
     }
     case "impossible": {
       resultsPanel.hidden = true;
       renderDiagram(null);
-      setStatus(result.reason, true);
+      const angleKeys: AngleKey[] = ["A", "B", "C"];
+      const givenAngles = angleKeys.filter((key) => input[key] !== undefined);
+      const angleSum = givenAngles.reduce(
+        (sum, key) => sum + (input[key] as number),
+        0,
+      );
+      const twoBigAngles = givenAngles.length >= 2 && angleSum >= 180;
+      setStatus(
+        twoBigAngles
+          ? "Zwei Winkel ergeben bereits 180° oder mehr."
+          : "Mit diesen Werten existiert kein Dreieck.",
+        true,
+      );
       break;
     }
   }
@@ -282,7 +321,7 @@ clearButton.addEventListener("click", () => {
 
 themeButton.addEventListener("click", () => {
   const isLight = document.documentElement.classList.toggle("light-theme");
-  const nextLabel = isLight ? "Dark" : "Light";
+  const nextLabel = isLight ? "Dunkel" : "Hell";
   themeButton.setAttribute("data-label", nextLabel);
   themeButton.setAttribute("data-abbr", nextLabel);
 });

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -26,32 +26,31 @@
   <body>
     <main class="app">
       <header class="app-bar">
-        <h1 class="wordmark">Trica</h1>
         <div class="compound-commands">
           <button
             type="button"
             class="command"
             id="clear"
-            data-label="Clear"
-            data-abbr="Clr"
+            data-label="Löschen"
+            data-abbr="Lösch"
           ></button>
           <button
             type="button"
             class="command"
             id="theme"
-            data-label="Light"
-            data-abbr="Light"
+            data-label="Hell"
+            data-abbr="Hell"
           ></button>
         </div>
       </header>
 
       <div class="layout">
-        <!-- Inputs -->
+        <!-- Eingaben -->
         <section class="panel inputs">
-          <header>Inputs</header>
+          <header>Eingaben</header>
           <article>
             <div class="group" id="group-sides">
-              <p class="group-title">Sides</p>
+              <p class="group-title">Seiten</p>
               <div class="field">
                 <label class="field-label" for="f-a">a</label>
                 <div class="field-control">
@@ -61,7 +60,7 @@
                     data-key="a"
                     inputmode="decimal"
                     autocomplete="off"
-                    aria-label="side a"
+                    aria-label="Seite a"
                   />
                 </div>
                 <span class="auto-tag">auto</span>
@@ -75,7 +74,7 @@
                     data-key="b"
                     inputmode="decimal"
                     autocomplete="off"
-                    aria-label="side b"
+                    aria-label="Seite b"
                   />
                 </div>
                 <span class="auto-tag">auto</span>
@@ -89,7 +88,7 @@
                     data-key="c"
                     inputmode="decimal"
                     autocomplete="off"
-                    aria-label="side c"
+                    aria-label="Seite c"
                   />
                 </div>
                 <span class="auto-tag">auto</span>
@@ -97,7 +96,7 @@
             </div>
 
             <div class="group" id="group-angles">
-              <p class="group-title">Angles</p>
+              <p class="group-title">Winkel</p>
               <div class="field">
                 <label class="field-label" for="f-A">A</label>
                 <div class="field-control has-unit">
@@ -107,7 +106,7 @@
                     data-key="A"
                     inputmode="decimal"
                     autocomplete="off"
-                    aria-label="angle A"
+                    aria-label="Winkel A"
                   />
                   <span class="unit">&deg;</span>
                 </div>
@@ -122,7 +121,7 @@
                     data-key="B"
                     inputmode="decimal"
                     autocomplete="off"
-                    aria-label="angle B"
+                    aria-label="Winkel B"
                   />
                   <span class="unit">&deg;</span>
                 </div>
@@ -137,7 +136,7 @@
                     data-key="C"
                     inputmode="decimal"
                     autocomplete="off"
-                    aria-label="angle C"
+                    aria-label="Winkel C"
                   />
                   <span class="unit">&deg;</span>
                 </div>
@@ -146,41 +145,41 @@
             </div>
 
             <button type="button" class="command flash solve-mobile" id="solve">
-              = Solve
+              = Berechnen
             </button>
 
             <p class="status" id="status" hidden></p>
           </article>
           <footer>
             <span class="convention"
-              >side <em>a</em> is opposite angle <em>A</em></span
+              >Seite <em>a</em> liegt gegenüber Winkel <em>A</em></span
             >
           </footer>
         </section>
 
-        <!-- Diagram -->
+        <!-- Diagramm -->
         <section class="panel diagram">
           <header>
-            <span>Diagram</span>
+            <span>Diagramm</span>
             <div
               class="compound-commands solution-toggle"
               id="solutionToggle"
               hidden
             >
               <button type="button" class="command" data-solution="0">
-                Solution 1
+                Lösung 1
               </button>
               <button type="button" class="command outline" data-solution="1">
-                Solution 2
+                Lösung 2
               </button>
             </div>
           </header>
           <article id="diagram"></article>
         </section>
 
-        <!-- Results -->
+        <!-- Ergebnisse -->
         <section class="panel results" id="resultsPanel" hidden>
-          <header>Results</header>
+          <header>Ergebnisse</header>
           <article class="result-grid" id="results"></article>
         </section>
       </div>

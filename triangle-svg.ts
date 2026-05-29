@@ -111,6 +111,69 @@ function rightAngleMarker(corner: Point, toward1: Point, toward2: Point): string
   )},${p2.y.toFixed(1)} ${p3.x.toFixed(1)},${p3.y.toFixed(1)}" class="tri-right-angle" />`;
 }
 
+// Unit vector pointing from `from` to `to`.
+function unitVector(from: Point, to: Point): Point {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy) || 1;
+  return { x: dx / length, y: dy / length };
+}
+
+// An arc marking the interior angle at `corner`, traced as a polyline between
+// the two adjacent edges (nlerp between the edge directions — always the minor
+// arc, so no SVG sweep-flag guesswork).
+function angleArc(corner: Point, toward1: Point, toward2: Point): string {
+  const u1 = unitVector(corner, toward1);
+  const u2 = unitVector(corner, toward2);
+  const radius = 20;
+  const samples = 14;
+  const points: string[] = [];
+  for (let step = 0; step <= samples; step += 1) {
+    const t = step / samples;
+    let dx = (1 - t) * u1.x + t * u2.x;
+    let dy = (1 - t) * u1.y + t * u2.y;
+    const length = Math.hypot(dx, dy) || 1;
+    dx /= length;
+    dy /= length;
+    points.push(
+      `${(corner.x + radius * dx).toFixed(1)},${(corner.y + radius * dy).toFixed(1)}`,
+    );
+  }
+  return `<polyline points="${points.join(" ")}" class="tri-angle-arc" />`;
+}
+
+// The angle at `corner`: a right-angle square (if ~90°) or an arc, plus the
+// degree value placed just inside the triangle along the angle bisector.
+function angleAnnotation(
+  corner: Point,
+  toward1: Point,
+  toward2: Point,
+  value: number,
+): string {
+  const right = isRightAngle(value);
+  const marker = right
+    ? rightAngleMarker(corner, toward1, toward2)
+    : angleArc(corner, toward1, toward2);
+
+  const u1 = unitVector(corner, toward1);
+  const u2 = unitVector(corner, toward2);
+  let bx = u1.x + u2.x;
+  let by = u1.y + u2.y;
+  const length = Math.hypot(bx, by) || 1;
+  bx /= length;
+  by /= length;
+  const distance = right ? 30 : 34;
+  const labelX = corner.x + bx * distance;
+  const labelY = corner.y + by * distance;
+  const label = `<text x="${labelX.toFixed(1)}" y="${labelY.toFixed(
+    1,
+  )}" class="tri-angle-label" text-anchor="middle" dominant-baseline="middle">${formatLabel(
+    value,
+  )}°</text>`;
+
+  return marker + label;
+}
+
 // Faint placeholder shown before anything is solved.
 export function placeholderSvg(): string {
   const p = PADDING + 8;
@@ -120,7 +183,7 @@ export function placeholderSvg(): string {
   return [
     `<svg viewBox="0 0 ${VIEW} ${VIEW}" xmlns="http://www.w3.org/2000/svg" class="tri tri-placeholder" role="img" aria-label="No triangle yet">`,
     `<polygon points="${apex.x},${apex.y} ${left.x},${left.y} ${right.x},${right.y}" class="tri-edge" />`,
-    `<text x="${VIEW / 2}" y="${VIEW / 2 + 28}" class="tri-hint" text-anchor="middle">enter values</text>`,
+    `<text x="${VIEW / 2}" y="${VIEW / 2 + 28}" class="tri-hint" text-anchor="middle">Werte eingeben</text>`,
     `</svg>`,
   ].join("");
 }
@@ -148,10 +211,12 @@ export function triangleSvg(triangle: Triangle): string {
     )}</text>`;
   };
 
-  const markers: string[] = [];
-  if (isRightAngle(triangle.A)) markers.push(rightAngleMarker(A, B, C));
-  if (isRightAngle(triangle.B)) markers.push(rightAngleMarker(B, A, C));
-  if (isRightAngle(triangle.C)) markers.push(rightAngleMarker(C, A, B));
+  // Angle markers (arc or right-angle square) + the degree value at each vertex.
+  const markers: string[] = [
+    angleAnnotation(A, B, C, triangle.A),
+    angleAnnotation(B, A, C, triangle.B),
+    angleAnnotation(C, A, B, triangle.C),
+  ];
 
   return [
     `<svg viewBox="0 0 ${VIEW} ${VIEW}" xmlns="http://www.w3.org/2000/svg" class="tri" role="img" aria-label="Solved triangle">`,

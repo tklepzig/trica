@@ -113,6 +113,6 @@ describe("placeholderSvg", () => {
   it("renders the empty-state hint", () => {
     const svg = placeholderSvg();
     expect(svg).toContain("tri-placeholder");
-    expect(svg).toContain("enter values");
+    expect(svg).toContain("Werte eingeben");
   });
 });

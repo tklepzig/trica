@@ -15,6 +15,18 @@
   src: url("./assets/fonts/open-sans-latin.woff2") format("woff2");
 }
 
+// Trica runs a touch smaller than Ada's stock sizing (16/14px), which felt
+// oversized for a dense calculator. rem cascades from html { font-size }.
+:root {
+  --font-size: 13px;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --font-size: 12px;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // App frame
 // ---------------------------------------------------------------------------
@@ -45,18 +57,9 @@ body {
   top: 0;
   z-index: 5;
   display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: var(--spacing);
+  justify-items: end;
   padding: var(--padding-sm) 0;
   background: var(--bg-body);
-}
-
-.wordmark {
-  margin: 0;
-  font-size: var(--text-2xl);
-  font-weight: 600;
-  letter-spacing: 0.12em;
 }
 
 // ---------------------------------------------------------------------------
@@ -235,32 +238,47 @@ body {
   height: auto;
 }
 
+// SVG strokes/text use --fg-body (not --color100) so they flip with the theme —
+// --color100 is always the light shade and would vanish on the light background.
 .tri-face {
   fill: var(--color700);
   fill-opacity: 0.55;
-  stroke: var(--color100);
+  stroke: var(--fg-body);
   stroke-width: 2;
   stroke-linejoin: round;
 }
 
 .tri-vertex-label {
-  fill: var(--color100);
+  fill: var(--fg-body);
   font-size: 19px;
   font-weight: 600;
   font-style: italic;
 }
 
 .tri-side-label {
-  fill: var(--color100);
+  fill: var(--fg-body);
   font-size: 14px;
   opacity: 0.85;
 }
 
 .tri-right-angle {
   fill: none;
-  stroke: var(--color100);
+  stroke: var(--fg-body);
   stroke-width: 2;
   opacity: 0.7;
+}
+
+.tri-angle-arc {
+  fill: none;
+  stroke: var(--fg-body);
+  stroke-width: 2;
+  opacity: 0.7;
+}
+
+.tri-angle-label {
+  fill: var(--fg-body);
+  font-size: 12px;
+  opacity: 0.85;
 }
 
 .tri-placeholder .tri-edge {
@@ -294,7 +312,9 @@ body {
   gap: var(--spacing-xs);
   padding: var(--padding-sm) var(--padding);
   border-radius: var(--border-radius);
-  background: var(--color800);
+  // Translucent tint of the text colour so the cell stays legible in both
+  // themes (a fixed shade went dark-on-dark in the light theme).
+  background: color-mix(in oklab, var(--fg-body) 8%, transparent);
 }
 
 .result-cell .label {
@@ -306,4 +326,7 @@ body {
 
 .result-cell .value {
   font-size: var(--text-lg);
+  // Long German terms (ungleichseitig, gleichschenklig) must not overflow.
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
