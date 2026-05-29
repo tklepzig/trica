@@ -46,6 +46,19 @@ body {
   align-items: stretch;
 }
 
+// Desktop: centre the app vertically in the viewport. `safe` keeps it
+// top-aligned (and scrollable) if the content ever outgrows the screen, rather
+// than clipping off the top. Left untouched on mobile, where the body keeps its
+// natural top-aligned scroll so a focused input isn't trapped under the
+// on-screen keyboard.
+@media (min-width: 640px) {
+  body {
+    min-height: 100vh;
+    display: grid;
+    align-content: safe center;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Layout: single column on mobile; inputs | diagram on top, results below
 // ---------------------------------------------------------------------------
@@ -281,4 +294,200 @@ body {
   // Long German terms (ungleichseitig, gleichschenklig) must not overflow.
   overflow-wrap: break-word;
   hyphens: auto;
+}
+
+// ---------------------------------------------------------------------------
+// Help dialog (native <dialog>, opened from the rail's Info button)
+// ---------------------------------------------------------------------------
+// The <dialog> itself is just a transparent, centred frame with no padding, so
+// a click on it (not its content) is a backdrop click → close (see ui.ts). All
+// the visible chrome and the scroll live on the inner .panel.
+.help {
+  border: none;
+  // A little padding so the panel + action bar don't sit flush against the
+  // dialog edges; the surrounding gap shows the backdrop, so they read as
+  // floating cards (and a click there still closes — it lands on the dialog).
+  padding: var(--padding);
+  background: transparent;
+  max-width: min(42rem, calc(100% - 2 * var(--spacing)));
+  width: 100%;
+  // Bound the height here (not on the panel) so the panel row can flex and its
+  // <article> becomes the scroller; the action bar is pinned below it.
+  max-height: min(85vh, 48rem);
+  color: var(--fg-body);
+  // Only lay out the grid when open — an unconditional `display: grid` would
+  // override the UA's `dialog:not([open]) { display: none }`, leaving the
+  // dialog rendered inline at the bottom of the page when closed.
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--spacing);
+
+  &[open] {
+    display: grid;
+  }
+
+  &::backdrop {
+    background: rgb(0 0 0 / 0.55);
+    backdrop-filter: blur(2px);
+  }
+}
+
+// showModal() draws a backdrop but doesn't lock the page, so the body keeps its
+// own scrollbar behind the dialog's. Lock it while the dialog is open — keyed
+// off the [open] attribute so ESC-to-close releases it too. The dialog's
+// <article> stays the only scroller.
+html:has(.help[open]) {
+  overflow: hidden;
+}
+
+// Ada's .panel grid (header / article / footer) already gives the article its
+// padding and the custom scrollbar. We shrink the panel within its grid track
+// so the <article> is what scrolls (header + footer stay put). Ada's .panel is
+// ~10% opaque, which would let the calculator bleed through (fine on dark,
+// muddy on light), so lay the panel tint over an opaque --bg-body.
+.help-panel {
+  min-height: 0;
+  background:
+    linear-gradient(oklch(var(--500) / 0.1), oklch(var(--500) / 0.1)),
+    var(--bg-body);
+
+  > article {
+    display: grid;
+    gap: var(--spacing);
+  }
+}
+
+.help-head h2 {
+  margin: 0;
+  font-size: var(--text-xl);
+}
+
+// Action bar: mirrors the rail (end spacers + a flex spacer pushing Close to
+// the right). compound-commands is inline-flex; stretch it to the full width.
+.help-bar {
+  display: flex;
+}
+
+// On phones the dialog fills the screen (the panel + bar still inset by the
+// dialog padding above).
+@media (max-width: 639.98px) {
+  .help {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0;
+  }
+}
+
+.help-intro {
+  margin: 0;
+  opacity: 0.85;
+}
+
+.help-section {
+  display: grid;
+  gap: var(--spacing-sm);
+
+  h3 {
+    margin: 0;
+    font-size: var(--text-lg);
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.help-steps,
+.help-material,
+.help-note {
+  margin: 0;
+}
+
+.help-steps {
+  // Normal list flow (NOT grid — a grid container blockifies its items and
+  // kills the list markers). Ada's reset strips markers globally, so restore
+  // decimal numbering here.
+  margin: 0;
+  padding-left: 1.5em;
+  list-style: decimal;
+
+  li {
+    padding-left: 0.2em;
+  }
+
+  li + li {
+    margin-top: var(--spacing-xs);
+  }
+}
+
+.help-note {
+  font-size: var(--text-sm);
+  opacity: 0.7;
+}
+
+// A tinted block for the "this is how it maps into Trica" note and the shadow
+// formula — same translucent tint as the result cells so it reads as a callout.
+.help-callout,
+.help-formula {
+  margin: 0;
+  padding: var(--padding-sm) var(--padding);
+  border-radius: var(--border-radius);
+  background: color-mix(in oklab, var(--fg-body) 8%, transparent);
+}
+
+.help-formula {
+  text-align: center;
+  font-size: var(--text-lg);
+}
+
+// Figures: line art that flips with the theme (everything keyed off --fg-body,
+// never the always-light --color100). Mirrors the triangle SVG conventions.
+.help-figure {
+  width: 100%;
+  max-width: 22rem;
+  height: auto;
+  justify-self: center;
+}
+
+.hf-line {
+  fill: none;
+  stroke: var(--fg-body);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.hf-straw {
+  fill: none;
+  stroke: var(--fg-body);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.hf-fill {
+  fill: var(--color700);
+  fill-opacity: 0.5;
+  stroke: var(--fg-body);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.hf-dot {
+  fill: var(--color500);
+  stroke: none;
+}
+
+.hf-dash {
+  stroke-dasharray: 5 5;
+}
+
+.hf-muted {
+  opacity: 0.55;
+}
+
+.hf-label {
+  fill: var(--fg-body);
+  font-size: 13px;
+  opacity: 0.9;
 }

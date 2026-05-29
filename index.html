@@ -30,6 +30,7 @@
         <button type="button" class="command" id="solve" disabled>Calc</button>
         <button type="button" class="command" id="clear">Clear</button>
         <div class="spacer flex"></div>
+        <button type="button" class="command" id="help">Info</button>
         <button type="button" class="command" id="theme">Light</button>
         <div class="spacer"></div>
       </nav>
@@ -160,5 +161,190 @@
         </section>
       </div>
     </main>
+
+    <!-- Hilfe: Winkel draußen messen -->
+    <dialog id="helpDialog" class="help" aria-labelledby="helpTitle">
+      <section class="panel help-panel">
+        <header class="help-head">
+          <h2 id="helpTitle">Draußen messen</h2>
+        </header>
+        <article>
+          <p class="help-intro">
+          Auf dem Papier legst du ein Werkzeug an den Winkel. Draußen geht das
+          nicht – stattdessen misst du von deinem Standort aus den
+          <strong>Höhenwinkel</strong> zur Spitze (etwa eines Baums) und den
+          waagerechten <strong>Abstand</strong>. Daraus rechnet Trica die Höhe.
+        </p>
+
+        <!-- 1: Smartphone -->
+        <section class="help-section">
+          <h3>1 · Höhenwinkel mit dem Smartphone</h3>
+
+          <svg
+            class="help-figure"
+            viewBox="0 0 320 200"
+            role="img"
+            aria-label="Vom Standort aus wird die Baumspitze anvisiert; gemessen werden Höhenwinkel und waagerechter Abstand."
+          >
+            <line x1="40" y1="172" x2="270" y2="172" class="hf-line hf-dash hf-muted" />
+            <line x1="45" y1="120" x2="45" y2="172" class="hf-line hf-dash hf-muted" />
+            <text x="18" y="150" class="hf-label hf-muted">Augen-</text>
+            <text x="18" y="164" class="hf-label hf-muted">höhe</text>
+            <line x1="265" y1="172" x2="265" y2="44" class="hf-line" />
+            <circle cx="265" cy="36" r="15" class="hf-fill" />
+            <line x1="45" y1="120" x2="265" y2="120" class="hf-line" />
+            <text x="150" y="137" class="hf-label" text-anchor="middle">Abstand</text>
+            <line x1="45" y1="120" x2="265" y2="44" class="hf-line" />
+            <text x="148" y="76" class="hf-label" text-anchor="middle">Visierlinie</text>
+            <text x="276" y="92" class="hf-label">Höhe</text>
+            <polyline points="251,120 251,106 265,106" class="hf-line" />
+            <path d="M 85 120 A 40 40 0 0 0 82.7 106.6" class="hf-line" />
+            <text x="96" y="114" class="hf-label">θ</text>
+            <circle cx="45" cy="120" r="3.5" class="hf-fill" />
+            <text x="44" y="112" class="hf-label" text-anchor="middle">du</text>
+          </svg>
+
+          <ol class="help-steps">
+            <li>
+              Öffne eine Neigungsmesser- oder Wasserwaagen-App (sie nutzt die
+              Lagesensoren des Handys).
+            </li>
+            <li>
+              Visiere die Baumspitze über die Oberkante des Handys an. Die App
+              zeigt den Winkel zur Horizontalen – das ist der Höhenwinkel&nbsp;θ.
+            </li>
+            <li>
+              Miss den waagerechten Abstand zum Stamm (Maßband oder abgeschrittene
+              Schritte).
+            </li>
+            <li>Merke dir deine Augenhöhe.</li>
+          </ol>
+
+          <p class="help-callout">
+            <strong>In Trica:</strong> Der Abstand ist die anliegende Kathete, die
+            gesuchte Höhe die gegenüberliegende. Trage zwei Winkel und eine Seite
+            ein – z.&nbsp;B. Winkel&nbsp;B&nbsp;=&nbsp;θ, Winkel&nbsp;A&nbsp;=&nbsp;90°,
+            Seite&nbsp;c&nbsp;=&nbsp;Abstand. Trica liefert Seite&nbsp;b&nbsp;=&nbsp;Höhe
+            über Augenhöhe. Zum Schluss die <strong>Augenhöhe addieren</strong>.
+          </p>
+        </section>
+
+        <!-- 2: DIY -->
+        <section class="help-section">
+          <h3>2 · DIY-Neigungsmesser</h3>
+          <p>Kein Smartphone? Bau dir in zwei Minuten einen Neigungsmesser:</p>
+
+          <svg
+            class="help-figure"
+            viewBox="0 0 320 200"
+            role="img"
+            aria-label="Winkelmesser mit Strohhalm als Visierlinie und einem an einem Faden hängenden Gewicht; der Faden kreuzt die Skala."
+          >
+            <!-- horizontal reference through the centre hole -->
+            <line x1="150" y1="80" x2="244" y2="80" class="hf-line hf-dash hf-muted" />
+            <!-- half-disc (flat edge = straw, arc below) -->
+            <path
+              d="M 76.4 122.5 A 85 85 0 0 0 223.6 37.5"
+              class="hf-fill"
+            />
+            <!-- straw along the flat (diameter) edge -->
+            <line x1="76.4" y1="122.5" x2="223.6" y2="37.5" class="hf-straw" />
+            <text x="120" y="98" class="hf-label">Strohhalm</text>
+            <!-- line of sight beyond the straw -->
+            <line x1="223.6" y1="37.5" x2="271" y2="10" class="hf-line hf-dash" />
+            <circle cx="282" cy="13" r="11" class="hf-fill" />
+            <!-- plumb line from the centre hole, hanging vertically -->
+            <circle cx="150" cy="80" r="3.5" class="hf-fill" />
+            <line x1="150" y1="80" x2="150" y2="178" class="hf-line" />
+            <circle cx="150" cy="183" r="6" class="hf-fill" />
+            <text x="158" y="150" class="hf-label">Faden</text>
+            <text x="158" y="192" class="hf-label">Gewicht</text>
+            <!-- where the string crosses the scale -->
+            <circle cx="150" cy="165" r="3" class="hf-dot" />
+            <text x="120" y="180" class="hf-label" text-anchor="end">60°</text>
+          </svg>
+
+          <p class="help-material">
+            <strong>Material:</strong> Winkelmesser (Halbkreis), Strohhalm, Faden
+            und ein kleines Gewicht (z.&nbsp;B. eine Mutter).
+          </p>
+          <ol class="help-steps">
+            <li>Klebe den Strohhalm an die gerade Kante – das ist die Visierlinie.</li>
+            <li>Fädle den Faden durch das Mittelloch und häng das Gewicht an.</li>
+            <li>
+              Visiere die Baumspitze durch den Strohhalm an. Der Faden hängt
+              senkrecht und kreuzt die Skala.
+            </li>
+            <li>
+              <strong>Höhenwinkel = 90° − abgelesener Wert.</strong> Beispiel:
+              Faden bei 60° → Höhenwinkel 30°.
+            </li>
+          </ol>
+          <p class="help-note">
+            Abstand und Augenhöhe misst du wie oben; das Rechnen übernimmt dann
+            Trica.
+          </p>
+        </section>
+
+        <!-- 3: Schatten -->
+        <section class="help-section">
+          <h3>3 · Schattenmethode (ganz ohne Winkel)</h3>
+          <p>
+            Bei Sonnenschein brauchst du kein Messgerät – nur Ähnlichkeit
+            (Strahlensatz):
+          </p>
+
+          <svg
+            class="help-figure"
+            viewBox="0 0 320 200"
+            role="img"
+            aria-label="Stab und Baum werfen bei gleichem Sonnenwinkel ähnliche Schattendreiecke."
+          >
+            <!-- sun, upper left -->
+            <circle cx="42" cy="28" r="11" class="hf-fill" />
+            <line x1="42" y1="10" x2="42" y2="2" class="hf-line hf-muted" />
+            <line x1="24" y1="28" x2="16" y2="28" class="hf-line hf-muted" />
+            <line x1="29" y1="15" x2="23" y2="9" class="hf-line hf-muted" />
+            <!-- ground -->
+            <line x1="30" y1="165" x2="300" y2="165" class="hf-line" />
+            <!-- pole + its shadow triangle -->
+            <polygon points="80,115 80,165 120,165" class="hf-fill" />
+            <line x1="80" y1="115" x2="80" y2="165" class="hf-straw" />
+            <text x="62" y="110" class="hf-label">Stab</text>
+            <text x="98" y="180" class="hf-label" text-anchor="middle">Schatten</text>
+            <!-- tree + its shadow triangle -->
+            <polygon points="190,65 190,165 270,165" class="hf-fill" />
+            <line x1="190" y1="80" x2="190" y2="165" class="hf-straw" />
+            <circle cx="190" cy="65" r="16" class="hf-fill" />
+            <text x="172" y="120" class="hf-label" text-anchor="end">Höhe?</text>
+            <text x="230" y="180" class="hf-label" text-anchor="middle">Schatten</text>
+            <!-- a couple of parallel sun rays -->
+            <line x1="60" y1="44" x2="120" y2="165" class="hf-line hf-dash hf-muted" />
+            <line x1="130" y1="44" x2="270" y2="165" class="hf-line hf-dash hf-muted" />
+          </svg>
+
+          <ol class="help-steps">
+            <li>Stell einen Stab bekannter Höhe senkrecht in den Boden.</li>
+            <li>Miss gleichzeitig den Schatten des Stabs und den Schatten des Baums.</li>
+            <li>Beide Dreiecke haben denselben Sonnenwinkel – sie sind ähnlich.</li>
+          </ol>
+          <p class="help-formula">
+            Baumhöhe = Stabhöhe × ( Baumschatten ÷ Stabschatten )
+          </p>
+          <p class="help-note">
+            Hier misst du vom Boden – die Augenhöhe spielt keine Rolle, und Trica
+            brauchst du dafür nicht.
+          </p>
+        </section>
+        </article>
+        <footer></footer>
+      </section>
+      <nav class="compound-commands help-bar" aria-label="Dialog-Aktionen">
+        <div class="spacer"></div>
+        <div class="spacer flex"></div>
+        <button type="button" class="command" id="helpClose">Close</button>
+        <div class="spacer"></div>
+      </nav>
+    </dialog>
   </body>
 </html>

@@ -40,6 +40,9 @@ const solutionToggle = document.getElementById("solutionToggle") as HTMLElement;
 const clearButton = document.getElementById("clear") as HTMLButtonElement;
 const themeButton = document.getElementById("theme") as HTMLButtonElement;
 const solveButton = document.getElementById("solve") as HTMLButtonElement;
+const helpButton = document.getElementById("help") as HTMLButtonElement;
+const helpDialog = document.getElementById("helpDialog") as HTMLDialogElement;
+const helpCloseButton = document.getElementById("helpClose") as HTMLButtonElement;
 
 // Holds the two triangles + deriveds for the ambiguous (SSA) case so the
 // solution toggle can switch between them without re-solving.
@@ -358,6 +361,15 @@ clearButton.addEventListener("click", () => {
 themeButton.addEventListener("click", () => {
   const isLight = document.documentElement.classList.toggle("light-theme");
   themeButton.textContent = isLight ? "Dark" : "Light";
+});
+
+// Help dialog: native <dialog> gives us focus-trap, ESC-to-close and a backdrop
+// for free. We add backdrop-click-to-close ourselves — the padding lives on the
+// inner .help-inner, so clicks landing on the <dialog> itself are the backdrop.
+helpButton.addEventListener("click", () => helpDialog.showModal());
+helpCloseButton.addEventListener("click", () => helpDialog.close());
+helpDialog.addEventListener("click", (event) => {
+  if (event.target === helpDialog) helpDialog.close();
 });
 
 // Initial paint.
