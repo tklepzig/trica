@@ -66,6 +66,9 @@ body {
     grid-template-areas:
       "inputs diagram"
       "inputs results";
+    // Stretch so the left (Eingaben) panel's bottom lines up with the right
+    // column instead of floating short.
+    align-items: stretch;
   }
   .inputs {
     grid-area: inputs;
