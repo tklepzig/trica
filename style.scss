@@ -41,13 +41,9 @@ body {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--spacing);
-  align-items: start;
-}
-
-// Vertical Ada command rail, kept in view while the content scrolls.
-.rail {
-  position: sticky;
-  top: var(--spacing);
+  // Stretch the rail to the full content height; its flex spacer then spreads
+  // the buttons (Calc/Clear at the top, theme at the bottom).
+  align-items: stretch;
 }
 
 // ---------------------------------------------------------------------------
@@ -86,7 +82,9 @@ body {
     column-gap: var(--spacing-lg);
     align-items: start;
   }
-  .group + .group {
+  // Higher specificity than the base `.group + .group` margin so the second
+  // column (Winkel) isn't pushed down — they share rows with Seiten instead.
+  .inputs > article > .group + .group {
     margin-top: 0;
   }
   .inputs .status {
@@ -293,6 +291,8 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
   gap: var(--spacing);
+  // Don't let a taller cell stretch the rest of its row.
+  align-items: start;
 }
 
 .result-cell {

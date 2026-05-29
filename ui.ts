@@ -35,6 +35,7 @@ const statusEl = document.getElementById("status") as HTMLParagraphElement;
 const resultsPanel = document.getElementById("resultsPanel") as HTMLElement;
 const resultsEl = document.getElementById("results") as HTMLElement;
 const diagramEl = document.getElementById("diagram") as HTMLElement;
+const triangleTypeEl = document.getElementById("triangle-type") as HTMLElement;
 const solutionToggle = document.getElementById("solutionToggle") as HTMLElement;
 const clearButton = document.getElementById("clear") as HTMLButtonElement;
 const themeButton = document.getElementById("theme") as HTMLButtonElement;
@@ -152,11 +153,16 @@ function shapeLabel(derived: Derived): string {
   return `${CLASSIFICATION_DE[derived.classification]} · ${shape}`;
 }
 
+// The classification shows in the diagram panel's footer (setTriangleType), not
+// as a tile, so the results panel stays all-numbers.
+function setTriangleType(derived: Derived | null): void {
+  triangleTypeEl.textContent = derived ? shapeLabel(derived) : "";
+}
+
 function renderResults(derived: Derived): void {
   const cells: Array<[string, string]> = [
     ["Fläche", formatNumber(derived.area)],
     ["Umfang", formatNumber(derived.perimeter)],
-    ["Typ", shapeLabel(derived)],
     ["Höhe a", formatNumber(derived.altitudes.a)],
     ["Höhe b", formatNumber(derived.altitudes.b)],
     ["Höhe c", formatNumber(derived.altitudes.c)],
@@ -181,6 +187,7 @@ function showEmptyState(): void {
   solutionToggle.hidden = true;
   resultsPanel.hidden = true;
   setStatus("", false);
+  setTriangleType(null);
   renderDiagram(null);
 }
 
@@ -198,12 +205,14 @@ function run(): void {
   const result = solve(input);
   ambiguous = null;
   solutionToggle.hidden = true;
+  setTriangleType(null);
 
   switch (result.kind) {
     case "unique": {
       fillComputed(result.triangle, result.given);
       renderDiagram(result.triangle);
       renderResults(result.derived);
+      setTriangleType(result.derived);
       setStatus(`Dreieck bestimmt – ${methodLabelDe(result.method)}.`, false);
       break;
     }
@@ -287,6 +296,7 @@ function renderSolution(): void {
   fillComputed(ambiguous.triangles[selectedSolution], ambiguous.given);
   renderDiagram(ambiguous.triangles[selectedSolution]);
   renderResults(ambiguous.derived[selectedSolution]);
+  setTriangleType(ambiguous.derived[selectedSolution]);
 
   solutionToggle
     .querySelectorAll<HTMLButtonElement>("[data-solution]")

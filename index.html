@@ -29,6 +29,7 @@
         <div class="spacer"></div>
         <button type="button" class="command" id="solve" disabled>Calc</button>
         <button type="button" class="command" id="clear">Clear</button>
+        <div class="spacer flex"></div>
         <button type="button" class="command" id="theme">Light</button>
         <div class="spacer"></div>
       </nav>
@@ -36,7 +37,7 @@
       <div class="layout">
         <!-- Eingaben -->
         <section class="panel inputs">
-          <header>Eingaben</header>
+          <header></header>
           <article>
             <div class="group" id="group-sides">
               <p class="group-title">Seiten</p>
@@ -145,7 +146,6 @@
         <!-- Diagramm -->
         <section class="panel diagram">
           <header>
-            <span>Diagramm</span>
             <div
               class="compound-commands solution-toggle"
               id="solutionToggle"
@@ -160,12 +160,12 @@
             </div>
           </header>
           <article id="diagram"></article>
-          <footer></footer>
+          <footer id="triangle-type"></footer>
         </section>
 
         <!-- Ergebnisse -->
         <section class="panel results" id="resultsPanel" hidden>
-          <header>Ergebnisse</header>
+          <header></header>
           <article class="result-grid" id="results"></article>
           <footer></footer>
         </section>
