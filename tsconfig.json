@@ -7,5 +7,5 @@
     "lib": ["ES2017", "DOM"],
     "target": "ES2017"
   },
-  "files": ["solver.ts"]
+  "files": ["solver.ts", "triangle-svg.ts", "ui.ts"]
 }

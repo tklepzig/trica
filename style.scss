@@ -1,0 +1,309 @@
+// Ada (sci-fi CSS framework) — theme first, then base. Resolved from
+// node_modules via the sass --load-path in the build script. Compiling Ada in
+// here (rather than vendoring CSS) keeps the offline bundle a single
+// style.min.css, matching how Vicy does it.
+@import "ada-ui/scss/ada.blue";
+@import "ada-ui/scss/ada";
+
+// Self-hosted Open Sans (Ada's default family) so the PWA renders identically
+// offline. Refresh the woff2 with scripts/update-fonts.sh.
+@font-face {
+  font-family: "Open Sans";
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: swap;
+  src: url("./assets/fonts/open-sans-latin.woff2") format("woff2");
+}
+
+// ---------------------------------------------------------------------------
+// App frame
+// ---------------------------------------------------------------------------
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+// Body scrolls (no fixed-height app shell) so a focused input is never trapped
+// under the mobile on-screen keyboard.
+body {
+  background: var(--bg-body);
+  color: var(--fg-body);
+  padding: var(--spacing);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app {
+  max-width: 56rem;
+  margin: 0 auto;
+  display: grid;
+  gap: var(--spacing);
+}
+
+.app-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--spacing);
+  padding: var(--padding-sm) 0;
+  background: var(--bg-body);
+}
+
+.wordmark {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+// ---------------------------------------------------------------------------
+// Layout: single column on mobile, inputs | (diagram / results) on desktop
+// ---------------------------------------------------------------------------
+.layout {
+  display: grid;
+  gap: var(--spacing);
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+@media (min-width: 640px) {
+  .layout {
+    grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+    grid-template-areas:
+      "inputs diagram"
+      "inputs results";
+  }
+  .inputs {
+    grid-area: inputs;
+  }
+  .diagram {
+    grid-area: diagram;
+  }
+  .results {
+    grid-area: results;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Inputs
+// ---------------------------------------------------------------------------
+.group {
+  display: grid;
+  gap: var(--spacing-sm);
+
+  & + .group {
+    margin-top: var(--spacing-lg);
+  }
+}
+
+.group-title {
+  margin: 0;
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.6;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr) 2.75rem;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.field-label {
+  font-size: var(--text-lg);
+  font-style: italic;
+}
+
+.field-control {
+  position: relative;
+  display: grid;
+
+  .input {
+    width: 100%;
+  }
+}
+
+// Angle fields carry a degree unit; pad the input so text clears it.
+.field-control.has-unit .input {
+  padding-right: 1.6rem;
+}
+
+.unit {
+  position: absolute;
+  top: 50%;
+  right: var(--padding-sm);
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+// Computed (solver-filled) value: dimmed + italic, with an "auto" tag.
+.input[data-computed] {
+  font-style: italic;
+  opacity: 0.65;
+}
+
+.auto-tag {
+  justify-self: start;
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  visibility: hidden;
+}
+
+.field:has(.input[data-computed]) .auto-tag {
+  visibility: visible;
+}
+
+// Error highlight: `warn` flips Ada's hue to the warn palette, so the .input
+// border (which uses --color600) turns red without any extra rules.
+.input.warn {
+  border-color: var(--color500);
+}
+
+.convention {
+  margin: 0;
+  opacity: 0.6;
+}
+
+// Ada pins command labels bottom-right; for a full-width primary action,
+// centre the label instead.
+.solve-mobile {
+  width: 100%;
+  margin-top: var(--spacing-lg);
+  justify-items: center;
+  align-items: center;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .solve-mobile {
+    display: none;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Status line (below inputs)
+// ---------------------------------------------------------------------------
+.status {
+  margin: var(--spacing-lg) 0 0;
+  min-height: 1.3em;
+  font-size: var(--text-sm);
+  color: var(--fg-body);
+  opacity: 0.75;
+
+  &[hidden] {
+    display: none;
+  }
+
+  // Real errors (inconsistent / impossible) only.
+  &.warn {
+    color: var(--color500);
+    opacity: 1;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Diagram
+// ---------------------------------------------------------------------------
+.diagram > header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--spacing);
+}
+
+.solution-toggle[hidden] {
+  display: none;
+}
+
+.diagram > article {
+  display: grid;
+  place-items: center;
+  padding: var(--padding);
+}
+
+.tri {
+  width: 100%;
+  max-width: 22rem;
+  height: auto;
+}
+
+.tri-face {
+  fill: var(--color700);
+  fill-opacity: 0.55;
+  stroke: var(--color100);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.tri-vertex-label {
+  fill: var(--color100);
+  font-size: 19px;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.tri-side-label {
+  fill: var(--color100);
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.tri-right-angle {
+  fill: none;
+  stroke: var(--color100);
+  stroke-width: 2;
+  opacity: 0.7;
+}
+
+.tri-placeholder .tri-edge {
+  fill: none;
+  stroke: var(--color600);
+  stroke-width: 2;
+  stroke-dasharray: 6 7;
+}
+
+.tri-hint {
+  fill: var(--color600);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+
+// ---------------------------------------------------------------------------
+// Results
+// ---------------------------------------------------------------------------
+.results[hidden] {
+  display: none;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: var(--spacing);
+}
+
+.result-cell {
+  display: grid;
+  gap: var(--spacing-xs);
+  padding: var(--padding-sm) var(--padding);
+  border-radius: var(--border-radius);
+  background: var(--color800);
+}
+
+.result-cell .label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.55;
+}
+
+.result-cell .value {
+  font-size: var(--text-lg);
+}

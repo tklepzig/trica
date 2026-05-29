@@ -11,6 +11,7 @@
       content="user-scalable=yes, initial-scale=1.0, maximum-scale=10.0, width=device-width"
     />
     <title>Trica</title>
+    <link href="style.min.css" rel="stylesheet" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <script>
@@ -20,9 +21,169 @@
         });
       }
     </script>
+    <script type="module" src="ui.js"></script>
   </head>
   <body>
-    <!-- UI intentionally absent. Solver lives in solver.ts and is fully tested;
-         a UI will be reattached later. -->
+    <main class="app">
+      <header class="app-bar">
+        <h1 class="wordmark">Trica</h1>
+        <div class="compound-commands">
+          <button
+            type="button"
+            class="command"
+            id="clear"
+            data-label="Clear"
+            data-abbr="Clr"
+          ></button>
+          <button
+            type="button"
+            class="command"
+            id="theme"
+            data-label="Light"
+            data-abbr="Light"
+          ></button>
+        </div>
+      </header>
+
+      <div class="layout">
+        <!-- Inputs -->
+        <section class="panel inputs">
+          <header>Inputs</header>
+          <article>
+            <div class="group" id="group-sides">
+              <p class="group-title">Sides</p>
+              <div class="field">
+                <label class="field-label" for="f-a">a</label>
+                <div class="field-control">
+                  <input
+                    class="input"
+                    id="f-a"
+                    data-key="a"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    aria-label="side a"
+                  />
+                </div>
+                <span class="auto-tag">auto</span>
+              </div>
+              <div class="field">
+                <label class="field-label" for="f-b">b</label>
+                <div class="field-control">
+                  <input
+                    class="input"
+                    id="f-b"
+                    data-key="b"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    aria-label="side b"
+                  />
+                </div>
+                <span class="auto-tag">auto</span>
+              </div>
+              <div class="field">
+                <label class="field-label" for="f-c">c</label>
+                <div class="field-control">
+                  <input
+                    class="input"
+                    id="f-c"
+                    data-key="c"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    aria-label="side c"
+                  />
+                </div>
+                <span class="auto-tag">auto</span>
+              </div>
+            </div>
+
+            <div class="group" id="group-angles">
+              <p class="group-title">Angles</p>
+              <div class="field">
+                <label class="field-label" for="f-A">A</label>
+                <div class="field-control has-unit">
+                  <input
+                    class="input"
+                    id="f-A"
+                    data-key="A"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    aria-label="angle A"
+                  />
+                  <span class="unit">&deg;</span>
+                </div>
+                <span class="auto-tag">auto</span>
+              </div>
+              <div class="field">
+                <label class="field-label" for="f-B">B</label>
+                <div class="field-control has-unit">
+                  <input
+                    class="input"
+                    id="f-B"
+                    data-key="B"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    aria-label="angle B"
+                  />
+                  <span class="unit">&deg;</span>
+                </div>
+                <span class="auto-tag">auto</span>
+              </div>
+              <div class="field">
+                <label class="field-label" for="f-C">C</label>
+                <div class="field-control has-unit">
+                  <input
+                    class="input"
+                    id="f-C"
+                    data-key="C"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    aria-label="angle C"
+                  />
+                  <span class="unit">&deg;</span>
+                </div>
+                <span class="auto-tag">auto</span>
+              </div>
+            </div>
+
+            <button type="button" class="command flash solve-mobile" id="solve">
+              = Solve
+            </button>
+
+            <p class="status" id="status" hidden></p>
+          </article>
+          <footer>
+            <span class="convention"
+              >side <em>a</em> is opposite angle <em>A</em></span
+            >
+          </footer>
+        </section>
+
+        <!-- Diagram -->
+        <section class="panel diagram">
+          <header>
+            <span>Diagram</span>
+            <div
+              class="compound-commands solution-toggle"
+              id="solutionToggle"
+              hidden
+            >
+              <button type="button" class="command" data-solution="0">
+                Solution 1
+              </button>
+              <button type="button" class="command outline" data-solution="1">
+                Solution 2
+              </button>
+            </div>
+          </header>
+          <article id="diagram"></article>
+        </section>
+
+        <!-- Results -->
+        <section class="panel results" id="resultsPanel" hidden>
+          <header>Results</header>
+          <article class="result-grid" id="results"></article>
+        </section>
+      </div>
+    </main>
   </body>
 </html>
