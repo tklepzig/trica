@@ -18,6 +18,10 @@ var urlsToCache = [
   "./solver.js",
   "./triangle-svg.js",
   "./assets/fonts/open-sans-latin.woff2",
+  "./assets/logo-192.png",
+  "./assets/logo-512.png",
+  "./assets/logo-192-maskable.png",
+  "./assets/logo-512-maskable.png",
 ];
 
 self.addEventListener("install", function (event) {
