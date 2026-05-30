@@ -1,0 +1,14 @@
+<!-- Maskable PWA icon source. Full-bleed square (no baked corners — the OS adds
+     its own mask), with the triangle scaled to ~72% and centred so it stays
+     inside the maskable safe zone (the central 80%-diameter circle). The
+     edge-to-edge rounded-corner version lives in logo.svg. Regenerate the PNGs
+     from both with scripts/gen-icons.sh. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0F1631" />
+  <g transform="translate(256 256) scale(0.72) translate(-256 -260)">
+    <polygon points="112,392 400,392 256,128" fill="none" stroke="#F07214" stroke-width="22" stroke-linejoin="round" />
+    <circle cx="112" cy="392" r="18" fill="#F07214" />
+    <circle cx="400" cy="392" r="18" fill="#F07214" />
+    <circle cx="256" cy="128" r="18" fill="#F07214" />
+  </g>
+</svg>

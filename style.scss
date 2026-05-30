@@ -2,7 +2,7 @@
 // node_modules via the sass --load-path in the build script. Compiling Ada in
 // here (rather than vendoring CSS) keeps the offline bundle a single
 // style.min.css, matching how Vicy does it.
-@import "ada-ui/scss/ada.green";
+@import "ada-ui/scss/ada.jupiter-2";
 @import "ada-ui/scss/ada";
 
 // Self-hosted Open Sans (Ada's default family) so the PWA renders identically
