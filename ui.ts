@@ -72,7 +72,7 @@ function readInput(): TriangleInput {
     if (element.hasAttribute("data-computed")) return;
     const raw = element.value.trim();
     if (raw === "") return;
-    const value = Number(raw);
+    const value = Number(raw.replace(",", "."));
     if (Number.isFinite(value)) input[key] = value;
   });
   return input;
