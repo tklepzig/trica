@@ -204,6 +204,33 @@ body {
 }
 
 // ---------------------------------------------------------------------------
+// Offline-ready indicator (help dialog footer)
+// ---------------------------------------------------------------------------
+// Three honest states, driven from ui.ts off the service worker's live-cache
+// check: dim "Caching…" while in progress, accent "Offline ready" once every
+// asset is cached, warn when the precache came up short. English on purpose —
+// infrastructure status, not user-facing copy.
+.offline-status {
+  font-size: var(--text-sm);
+  color: var(--fg-body);
+  opacity: 0.6;
+
+  &[hidden] {
+    display: none;
+  }
+
+  &.ready {
+    color: var(--color100);
+    opacity: 1;
+  }
+
+  &.warn {
+    color: var(--color500);
+    opacity: 1;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Diagram
 // ---------------------------------------------------------------------------
 .diagram > header {

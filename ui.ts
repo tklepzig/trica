@@ -43,6 +43,7 @@ const solveButton = document.getElementById("solve") as HTMLButtonElement;
 const helpButton = document.getElementById("help") as HTMLButtonElement;
 const helpDialog = document.getElementById("helpDialog") as HTMLDialogElement;
 const helpCloseButton = document.getElementById("helpClose") as HTMLButtonElement;
+const offlineStatusEl = document.getElementById("offlineStatus") as HTMLElement;
 
 // Holds the two triangles + deriveds for the ambiguous (SSA) case so the
 // solution toggle can switch between them without re-solving.
@@ -363,10 +364,114 @@ themeButton.addEventListener("click", () => {
   themeButton.textContent = isLight ? "Dark" : "Light";
 });
 
+// --- offline-ready indicator ----------------------------------------------
+// Tells the user, honestly, whether the app is fully cached and safe to use
+// offline — so installing becomes "wait for the green check" instead of the
+// "go offline, see if it works, reinstall, retry" loop. The service worker owns
+// the asset list and checks its own live cache (sw.js), so there's no second
+// list here to drift, and the answer stays true even after storage eviction.
+
+type OfflineReadyResult = { ready: boolean; missing: string[] };
+
+// Ask the active SW over a one-shot MessageChannel. Resolves null if there's no
+// worker yet or it doesn't answer in time (still warming up) — caller treats
+// that as the in-progress "Caching…" state rather than a failure.
+function askServiceWorker(worker: ServiceWorker): Promise<OfflineReadyResult | null> {
+  return new Promise((resolve) => {
+    const channel = new MessageChannel();
+    const timeout = setTimeout(() => resolve(null), 3000);
+    channel.port1.onmessage = (event) => {
+      clearTimeout(timeout);
+      resolve(event.data as OfflineReadyResult);
+    };
+    worker.postMessage({ type: "CHECK_OFFLINE_READY" }, [channel.port2]);
+  });
+}
+
+function setOfflineStatus(
+  state: "caching" | "ready" | "incomplete" | "unavailable",
+  missing: string[] = [],
+): void {
+  offlineStatusEl.classList.toggle("ready", state === "ready");
+  offlineStatusEl.classList.toggle(
+    "warn",
+    state === "incomplete" || state === "unavailable",
+  );
+  offlineStatusEl.hidden = false;
+  if (state === "ready") {
+    offlineStatusEl.textContent = "✓ Offline ready";
+  } else if (state === "incomplete") {
+    const names = missing.map((url) => url.replace(/^\.\//, "")).join(", ");
+    offlineStatusEl.textContent = `Offline cache incomplete — missing: ${names}`;
+  } else if (state === "unavailable") {
+    offlineStatusEl.textContent = "Service worker failed — offline unavailable";
+  } else {
+    offlineStatusEl.textContent = "Caching…";
+  }
+}
+
+let registrationFailed = false;
+
+async function refreshOfflineStatus(): Promise<void> {
+  // No SW support (or insecure context) → nothing meaningful to report; hide it
+  // rather than show a scary message for something the user can't act on.
+  if (!("serviceWorker" in navigator)) {
+    offlineStatusEl.hidden = true;
+    return;
+  }
+  // sw.js failed to load/parse: offline genuinely won't work, and
+  // navigator.serviceWorker.ready below would never resolve — so report it
+  // instead of awaiting a worker that will never arrive.
+  if (registrationFailed) {
+    setOfflineStatus("unavailable");
+    return;
+  }
+  // Only fall back to "Caching…" when we have no verdict yet. Setting it
+  // unconditionally would downgrade a previously-correct "Offline ready" to a
+  // stuck "Caching…" whenever a re-check times out below (the cache is fine —
+  // only the report would have regressed).
+  if (offlineStatusEl.hidden) setOfflineStatus("caching");
+  const registration = await navigator.serviceWorker.ready;
+  const worker = navigator.serviceWorker.controller ?? registration.active;
+  if (!worker) return; // no active worker to query yet — leave the current state
+  const result = await askServiceWorker(worker);
+  if (!result) return; // no answer in time — leave the current state
+  setOfflineStatus(result.ready ? "ready" : "incomplete", result.missing);
+}
+
+if ("serviceWorker" in navigator) {
+  // Ask the browser to make our storage durable. Cache Storage is best-effort by
+  // default — Android can evict it under storage pressure, which is the "worked,
+  // then stopped working offline" failure. Best-effort itself: ignored if denied.
+  if (navigator.storage?.persist) void navigator.storage.persist();
+
+  // Register the SW on load (lives here, not an inline script, so we can catch a
+  // registration failure and surface it via the badge). On failure we flip the
+  // flag and re-render, otherwise refreshOfflineStatus would await a worker that
+  // never arrives and sit on "Caching…" forever.
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {
+      registrationFailed = true;
+      void refreshOfflineStatus();
+    });
+  });
+
+  // A new build activating (skipWaiting + clients.claim) swaps the controller —
+  // re-check so the badge reflects the fresh cache instead of going stale.
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    void refreshOfflineStatus();
+  });
+}
+
 // Help dialog: native <dialog> gives us focus-trap, ESC-to-close and a backdrop
 // for free. We add backdrop-click-to-close ourselves — the padding lives on the
 // inner .help-inner, so clicks landing on the <dialog> itself are the backdrop.
-helpButton.addEventListener("click", () => helpDialog.showModal());
+// Re-check offline readiness each time it opens: it's a live read, so it always
+// shows the current truth (and catches a cache evicted since last time).
+helpButton.addEventListener("click", () => {
+  void refreshOfflineStatus();
+  helpDialog.showModal();
+});
 helpCloseButton.addEventListener("click", () => helpDialog.close());
 helpDialog.addEventListener("click", (event) => {
   if (event.target === helpDialog) helpDialog.close();
