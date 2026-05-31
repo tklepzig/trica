@@ -10,7 +10,6 @@ var CACHE_NAME = "trica-cache-__BUILD_ID__";
 // is self-hosted (same-origin) so it's cacheable with no cross-origin dependency.
 var urlsToCache = [
   "./",
-  "./index.html",
   "./manifest.webmanifest",
   "./favicon.svg",
   "./style.min.css",
@@ -75,13 +74,15 @@ self.addEventListener("fetch", function (event) {
   // the exact URL isn't cached — e.g. Android appends ?source=pwa to start_url,
   // which wouldn't byte-match the cached "./" — fall back to the cached shell so
   // the app still boots offline instead of showing the browser's offline page.
+  // The "./" entry holds the index document (caching "./" stores its bytes under
+  // that key — there is no separate index.html entry), so that's the target.
   if (request.mode === "navigate") {
     event.respondWith(
       caches.match(request, { ignoreSearch: true }).then(function (response) {
         return (
           response ||
           fetch(request).catch(function () {
-            return caches.match("./index.html");
+            return caches.match("./");
           })
         );
       }),
