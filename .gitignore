@@ -1,7 +1,6 @@
 node_modules/
-solver.js
 ui.js
-triangle-svg.js
+sw.js
 style.min.css
 style.min.css.map
 .brainstorm/
