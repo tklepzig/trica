@@ -5,7 +5,7 @@
 // SVG's y-down space. Labels are pushed outward from the centroid so they clear
 // the edges; the right angle (if any) gets a small square marker.
 
-import type { Triangle } from "./solver.js";
+import type { Key, Triangle } from "./solver.js";
 
 const DEG2RAD = Math.PI / 180;
 
@@ -13,6 +13,7 @@ const DEG2RAD = Math.PI / 180;
 // padded box so labels never clip regardless of the triangle's real size.
 const VIEW = 320;
 const PADDING = 52; // room for labels outside the triangle
+const CENTER = VIEW / 2;
 
 type Point = { x: number; y: number };
 
@@ -35,38 +36,58 @@ export function rawVertices(triangle: Triangle): { A: Point; B: Point; C: Point 
   return { A, B, C };
 }
 
+// Build a placement function: math-space points → SVG-space, centred on the
+// triangle's centroid and scaled so the farthest of `points` from that centroid
+// just fits within the padded half-view. Centring on the centroid (rather than
+// the bounding box) and bounding by *radius* makes the result rotation-safe:
+// the figure can be spun about the view centre afterwards and never clips a
+// corner, because every point stays within `CENTER - PADDING` of the centre.
+// `extra` lets non-vertex geometry (the Thales arc) widen the fit so it, too,
+// stays inside the canvas.
+function placer(
+  vertices: [Point, Point, Point],
+  extra: Point[] = [],
+): (point: Point) => Point {
+  const pivot = centroid(vertices[0], vertices[1], vertices[2]);
+  const radius =
+    Math.max(
+      ...[...vertices, ...extra].map((point) =>
+        Math.hypot(point.x - pivot.x, point.y - pivot.y),
+      ),
+    ) || 1;
+  const scale = (CENTER - PADDING) / radius;
+  return (point: Point): Point => ({
+    x: CENTER + (point.x - pivot.x) * scale,
+    // Flip Y: math-up becomes SVG-down.
+    y: CENTER - (point.y - pivot.y) * scale,
+  });
+}
+
 // Scale + translate the raw vertices to fit the padded viewBox, flipping Y.
 export function fitToView(raw: { A: Point; B: Point; C: Point }): {
   A: Point;
   B: Point;
   C: Point;
 } {
-  const points = [raw.A, raw.B, raw.C];
-  const xs = points.map((point) => point.x);
-  const ys = points.map((point) => point.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-
-  const spanX = maxX - minX || 1;
-  const spanY = maxY - minY || 1;
-  const available = VIEW - PADDING * 2;
-  const scale = Math.min(available / spanX, available / spanY);
-
-  // Centre the scaled triangle in the viewBox.
-  const drawnWidth = spanX * scale;
-  const drawnHeight = spanY * scale;
-  const offsetX = (VIEW - drawnWidth) / 2;
-  const offsetY = (VIEW - drawnHeight) / 2;
-
-  const place = (point: Point): Point => ({
-    x: offsetX + (point.x - minX) * scale,
-    // Flip Y: math-up becomes SVG-down.
-    y: VIEW - (offsetY + (point.y - minY) * scale),
-  });
-
+  const place = placer([raw.A, raw.B, raw.C]);
   return { A: place(raw.A), B: place(raw.B), C: place(raw.C) };
+}
+
+// Rotate an already-placed (SVG-space) point about the view centre. Positive
+// `degrees` reads clockwise on screen, matching a clockwise drag/twist — we
+// rotate the anchor points and re-emit horizontal <text>, so glyphs stay
+// upright (unlike wrapping the SVG in a <g transform="rotate">).
+function rotateAboutCenter(point: Point, degrees: number): Point {
+  if (!degrees) return point;
+  const radians = degrees * DEG2RAD;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  const dx = point.x - CENTER;
+  const dy = point.y - CENTER;
+  return {
+    x: CENTER + dx * cos - dy * sin,
+    y: CENTER + dx * sin + dy * cos,
+  };
 }
 
 function centroid(A: Point, B: Point, C: Point): Point {
@@ -143,17 +164,22 @@ function angleArc(corner: Point, toward1: Point, toward2: Point): string {
 }
 
 // The angle at `corner`: a right-angle square (if ~90°) or an arc, plus the
-// degree value placed just inside the triangle along the angle bisector.
+// degree value placed just inside the triangle along the angle bisector. In a
+// preview, `showValue` is false for angles the user hasn't entered — we then
+// draw only a plain arc (no square, no number), so the diagram never asserts a
+// guessed angle.
 function angleAnnotation(
   corner: Point,
   toward1: Point,
   toward2: Point,
   value: number,
+  showValue = true,
 ): string {
-  const right = isRightAngle(value);
+  const right = isRightAngle(value) && showValue;
   const marker = right
     ? rightAngleMarker(corner, toward1, toward2)
     : angleArc(corner, toward1, toward2);
+  if (!showValue) return marker;
 
   const u1 = unitVector(corner, toward1);
   const u2 = unitVector(corner, toward2);
@@ -196,18 +222,86 @@ function sideLabel(p1: Point, p2: Point, center: Point, text: string): string {
   )}" class="tri-side-label" text-anchor="middle" dominant-baseline="middle">${text}</text>`;
 }
 
+// Satz des Thales: in a right triangle the hypotenuse is the diameter of the
+// circumscribed circle, and the right-angle vertex lies exactly on that circle.
+// We return the semicircle over the hypotenuse (the arc that passes through the
+// right-angle vertex) as sampled math-space points — empty if not right-angled.
+// Sampling (rather than an SVG arc command) lets the points both widen the fit
+// and render as a <polyline>, the same sweep-flag-free approach as angleArc.
+function thalesArcPoints(
+  triangle: Triangle,
+  raw: { A: Point; B: Point; C: Point },
+): Point[] {
+  // Find the right-angle vertex; the other two span the hypotenuse.
+  const rightVertex = isRightAngle(triangle.A)
+    ? { corner: raw.A, ends: [raw.B, raw.C] as const }
+    : isRightAngle(triangle.B)
+      ? { corner: raw.B, ends: [raw.A, raw.C] as const }
+      : isRightAngle(triangle.C)
+        ? { corner: raw.C, ends: [raw.A, raw.B] as const }
+        : null;
+  if (!rightVertex) return [];
+
+  const [start, end] = rightVertex.ends;
+  const center = midpoint(start, end);
+  const radius = Math.hypot(end.x - start.x, end.y - start.y) / 2;
+  const angleStart = Math.atan2(start.y - center.y, start.x - center.x);
+  const angleCorner = Math.atan2(
+    rightVertex.corner.y - center.y,
+    rightVertex.corner.x - center.x,
+  );
+  // Sweep from `start` toward the side the right-angle vertex sits on, so the
+  // arc passes through it and bulges away from the hypotenuse.
+  const TWO_PI = Math.PI * 2;
+  const toCorner = (angleCorner - angleStart + TWO_PI) % TWO_PI;
+  const direction = toCorner < Math.PI ? 1 : -1;
+
+  const samples = 48;
+  const points: Point[] = [];
+  for (let step = 0; step <= samples; step += 1) {
+    const angle = angleStart + direction * (step / samples) * Math.PI;
+    points.push({
+      x: center.x + radius * Math.cos(angle),
+      y: center.y + radius * Math.sin(angle),
+    });
+  }
+  return points;
+}
+
+// Render placed (and rotated) Thales arc points as a polyline.
+function thalesArc(points: Point[]): string {
+  if (points.length === 0) return "";
+  const coords = points
+    .map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`)
+    .join(" ");
+  return `<polyline points="${coords}" class="tri-thales" />`;
+}
+
 // Placeholder shown before anything is solved: a reference triangle that names
 // where the sides (a, b, c) and vertices (A, B, C) sit, matching the solved
 // layout (C apex, A bottom-left, B bottom-right; side a opposite vertex A …).
-export function placeholderSvg(): string {
-  const p = PADDING + 8;
-  const apexC = { x: VIEW / 2, y: p };
-  const leftA = { x: p, y: VIEW - p };
-  const rightB = { x: VIEW - p, y: VIEW - p };
+// Defined in math space and run through the same placer + rotation as a solved
+// triangle, so it can be spun to match a real-world object before any value is
+// entered — and so the fit reserves label room at every angle.
+export function placeholderSvg(rotation = 0): string {
+  const raw = {
+    C: { x: 0, y: 1 }, // apex
+    A: { x: -1, y: -0.7 }, // bottom-left
+    B: { x: 1, y: -0.7 }, // bottom-right
+  };
+  const place = placer([raw.A, raw.B, raw.C]);
+  const put = (point: Point): Point =>
+    rotateAboutCenter(place(point), rotation);
+  const apexC = put(raw.C);
+  const leftA = put(raw.A);
+  const rightB = put(raw.B);
   const center = centroid(apexC, leftA, rightB);
+  const corners = [apexC, leftA, rightB]
+    .map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`)
+    .join(" ");
   return [
     `<svg viewBox="0 0 ${VIEW} ${VIEW}" xmlns="http://www.w3.org/2000/svg" class="tri tri-placeholder" role="img" aria-label="Noch kein Dreieck – Beschriftung">`,
-    `<polygon points="${apexC.x},${apexC.y} ${leftA.x},${leftA.y} ${rightB.x},${rightB.y}" class="tri-edge" />`,
+    `<polygon points="${corners}" class="tri-edge" />`,
     sideLabel(rightB, apexC, center, "a"),
     sideLabel(leftA, apexC, center, "b"),
     sideLabel(leftA, rightB, center, "c"),
@@ -218,29 +312,63 @@ export function placeholderSvg(): string {
   ].join("");
 }
 
-// Render a fully-solved triangle.
-export function triangleSvg(triangle: Triangle): string {
-  const fitted = fitToView(rawVertices(triangle));
-  const { A, B, C } = fitted;
+type TriangleSvgOptions = {
+  // Provisional (partial) preview: dashed outline instead of a solid fill.
+  provisional?: boolean;
+  // Which keys show their numeric value. Omitted → all do (a fully-solved
+  // triangle). In a preview, only the keys the user entered are set, so guessed
+  // sides/angles render as bare letters.
+  valued?: Partial<Record<Key, boolean>>;
+};
+
+// Render a triangle, optionally rotated by `rotation` degrees (clockwise on
+// screen) so the user can align it with their real-world setup. With
+// `provisional`/`valued` it renders a partial preview (see TriangleSvgOptions).
+export function triangleSvg(
+  triangle: Triangle,
+  rotation = 0,
+  options: TriangleSvgOptions = {},
+): string {
+  const showValue = (key: Key): boolean =>
+    options.valued ? Boolean(options.valued[key]) : true;
+
+  const raw = rawVertices(triangle);
+  const arcRaw = thalesArcPoints(triangle, raw);
+
+  // Fit once over vertices + arc so the (rotation-invariant) scale leaves room
+  // for both; then place and spin every point in screen space.
+  const place = placer([raw.A, raw.B, raw.C], arcRaw);
+  const put = (point: Point): Point => rotateAboutCenter(place(point), rotation);
+  const A = put(raw.A);
+  const B = put(raw.B);
+  const C = put(raw.C);
+  const arc = arcRaw.map(put);
   const center = centroid(A, B, C);
 
   // Angle markers (arc or right-angle square) + the degree value at each vertex.
   const markers: string[] = [
-    angleAnnotation(A, B, C, triangle.A),
-    angleAnnotation(B, A, C, triangle.B),
-    angleAnnotation(C, A, B, triangle.C),
+    angleAnnotation(A, B, C, triangle.A, showValue("A")),
+    angleAnnotation(B, A, C, triangle.B, showValue("B")),
+    angleAnnotation(C, A, B, triangle.C, showValue("C")),
   ];
+
+  const corners = `${A.x.toFixed(1)},${A.y.toFixed(1)} ${B.x.toFixed(
+    1,
+  )},${B.y.toFixed(1)} ${C.x.toFixed(1)},${C.y.toFixed(1)}`;
+  const face = options.provisional
+    ? `<polygon points="${corners}" class="tri-edge" />`
+    : `<polygon points="${corners}" class="tri-face" />`;
 
   return [
     `<svg viewBox="0 0 ${VIEW} ${VIEW}" xmlns="http://www.w3.org/2000/svg" class="tri" role="img" aria-label="Gelöstes Dreieck">`,
-    `<polygon points="${A.x.toFixed(1)},${A.y.toFixed(1)} ${B.x.toFixed(
-      1,
-    )},${B.y.toFixed(1)} ${C.x.toFixed(1)},${C.y.toFixed(1)}" class="tri-face" />`,
+    // Thales semicircle behind the face so the translucent fill sits on top.
+    thalesArc(arc),
+    face,
     ...markers,
     // Side a is opposite vertex A → the edge between B and C, etc.
-    sideLabel(B, C, center, `a=${formatLabel(triangle.a)}`),
-    sideLabel(A, C, center, `b=${formatLabel(triangle.b)}`),
-    sideLabel(A, B, center, `c=${formatLabel(triangle.c)}`),
+    sideLabel(B, C, center, showValue("a") ? `a=${formatLabel(triangle.a)}` : "a"),
+    sideLabel(A, C, center, showValue("b") ? `b=${formatLabel(triangle.b)}` : "b"),
+    sideLabel(A, B, center, showValue("c") ? `c=${formatLabel(triangle.c)}` : "c"),
     vertexLabel(A, center, "A"),
     vertexLabel(B, center, "B"),
     vertexLabel(C, center, "C"),

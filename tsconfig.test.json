@@ -9,6 +9,8 @@
     "solver.ts",
     "solver.test.ts",
     "triangle-svg.ts",
-    "triangle-svg.test.ts"
+    "triangle-svg.test.ts",
+    "preview.ts",
+    "preview.test.ts"
   ]
 }

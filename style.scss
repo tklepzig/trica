@@ -248,6 +248,17 @@ body {
   display: grid;
   place-items: center;
   padding: var(--padding);
+  // The diagram is a rotation surface: own all pointer gestures here so a
+  // two-finger twist isn't stolen by the browser's pinch-zoom (the viewport
+  // allows zoom elsewhere). Single-finger page scroll is sacrificed over this
+  // one bounded panel — scroll lands anywhere else.
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
 }
 
 .tri {
@@ -299,7 +310,18 @@ body {
   opacity: 0.85;
 }
 
-.tri-placeholder .tri-edge {
+// Thales semicircle over the hypotenuse of a right triangle — dashed and faint
+// so it reads as a construction aid, not part of the triangle itself.
+.tri-thales {
+  fill: none;
+  stroke: var(--fg-body);
+  stroke-width: 1.5;
+  opacity: 0.45;
+  stroke-dasharray: 4 5;
+}
+
+// Dashed outline shared by the placeholder and the provisional partial preview.
+.tri-edge {
   fill: none;
   stroke: var(--color600);
   stroke-width: 2;

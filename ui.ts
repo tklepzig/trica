@@ -20,6 +20,7 @@ import type {
   TriangleInput,
 } from "./solver.js";
 import { placeholderSvg, triangleSvg } from "./triangle-svg.js";
+import { buildPreviewTriangle } from "./preview.js";
 import { observeOfflineReadiness } from "@tklepzig/offline-kit";
 import type { OfflineStatus } from "@tklepzig/offline-kit";
 
@@ -55,6 +56,19 @@ let ambiguous: {
   given: GivenSet;
 } | null = null;
 let selectedSolution = 0;
+
+// Diagram rotation (degrees, clockwise on screen) — a view setting the user can
+// spin to match their real-world orientation. Persists across re-solves; reset
+// only on Clear. `currentTriangle` is the figure rotation re-renders against.
+const RAD2DEG = 180 / Math.PI;
+let rotation = 0;
+let currentTriangle: Triangle | null = null;
+// What the current figure is showing — kept so the rotation gesture can repaint
+// without recomputing it. `provisional`/`valued` mirror triangleSvg's options.
+let currentDiagramOptions: {
+  provisional?: boolean;
+  valued?: Partial<Record<Key, boolean>>;
+} = {};
 
 // --- formatting -----------------------------------------------------------
 
@@ -184,8 +198,31 @@ function renderResults(derived: Derived): void {
   resultsPanel.hidden = false;
 }
 
-function renderDiagram(triangle: Triangle | null): void {
-  diagramEl.innerHTML = triangle ? triangleSvg(triangle) : placeholderSvg();
+function renderDiagram(
+  triangle: Triangle | null,
+  options: typeof currentDiagramOptions = {},
+): void {
+  currentTriangle = triangle;
+  currentDiagramOptions = options;
+  paintDiagram();
+}
+
+// Paint the current figure at the current rotation. Split from renderDiagram so
+// the rotation gesture can repaint without recomputing what to show.
+function paintDiagram(): void {
+  diagramEl.innerHTML = currentTriangle
+    ? triangleSvg(currentTriangle, rotation, currentDiagramOptions)
+    : placeholderSvg(rotation);
+}
+
+// Which keys the user actually entered — only these show numeric labels in a
+// preview (the rest are guesses, drawn as bare letters).
+function enteredKeys(input: TriangleInput): Partial<Record<Key, boolean>> {
+  const valued: Partial<Record<Key, boolean>> = {};
+  KEYS.forEach((key) => {
+    if (input[key] !== undefined) valued[key] = true;
+  });
+  return valued;
 }
 
 function showEmptyState(): void {
@@ -235,9 +272,19 @@ function run(): void {
       break;
     }
     case "underdetermined": {
-      // Normal in-progress state, NOT an error — keep it quiet.
+      // Normal in-progress state, NOT an error — keep it quiet. Preview a
+      // representative triangle that honours what's entered so far; if the
+      // partial values already preclude a triangle, fall back to the placeholder.
       resultsPanel.hidden = true;
-      renderDiagram(null);
+      const preview = buildPreviewTriangle(input);
+      if (preview) {
+        renderDiagram(preview, {
+          provisional: true,
+          valued: enteredKeys(input),
+        });
+      } else {
+        renderDiagram(null);
+      }
       const onlyAngles =
         result.given.A &&
         result.given.B &&
@@ -341,6 +388,102 @@ inputs.forEach((element) => {
 
 solveButton.addEventListener("click", run);
 
+// --- diagram rotation gesture ---------------------------------------------
+// Works on both the placeholder and a solved triangle, so the figure can be
+// pre-oriented to a real-world object before any value is entered.
+// Mouse/pen: a single-pointer drag spins the figure about the diagram centre.
+// Touch: a two-finger twist spins it (a single touch is ignored so the page
+// still scrolls — the gesture only engages once a second finger lands). We
+// rotate in screen space and re-render the SVG; capture lives on the stable
+// <article> (#diagram), never the <svg> we replace each frame.
+
+type ActivePointer = { x: number; y: number; type: string };
+const activePointers = new Map<number, ActivePointer>();
+let gestureReference: number | null = null; // previous gesture angle (radians)
+let renderQueued = false;
+
+function diagramCenter(): { x: number; y: number } {
+  const rect = diagramEl.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
+// A gesture is live for a mouse with its button down (1 pointer) or for two
+// fingers down (a lone finger never rotates).
+function gestureActive(): boolean {
+  const pointers = [...activePointers.values()];
+  const hasTouch = pointers.some((pointer) => pointer.type === "touch");
+  return hasTouch ? pointers.length >= 2 : pointers.length >= 1;
+}
+
+// Current gesture angle (radians, screen space): the twist between the first
+// two touch points, or the angle from the diagram centre to the lone pointer.
+function gestureAngle(): number {
+  const pointers = [...activePointers.values()];
+  if (pointers.length >= 2) {
+    return Math.atan2(
+      pointers[1].y - pointers[0].y,
+      pointers[1].x - pointers[0].x,
+    );
+  }
+  const center = diagramCenter();
+  return Math.atan2(pointers[0].y - center.y, pointers[0].x - center.x);
+}
+
+function queueDiagramRender(): void {
+  if (renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(() => {
+    renderQueued = false;
+    paintDiagram();
+  });
+}
+
+diagramEl.addEventListener("pointerdown", (event) => {
+  activePointers.set(event.pointerId, {
+    x: event.clientX,
+    y: event.clientY,
+    type: event.pointerType,
+  });
+  diagramEl.setPointerCapture(event.pointerId);
+  gestureReference = gestureActive() ? gestureAngle() : null;
+});
+
+diagramEl.addEventListener("pointermove", (event) => {
+  const pointer = activePointers.get(event.pointerId);
+  if (!pointer) return;
+  pointer.x = event.clientX;
+  pointer.y = event.clientY;
+  if (!gestureActive()) return;
+  event.preventDefault();
+  const angle = gestureAngle();
+  if (gestureReference === null) {
+    gestureReference = angle;
+    return;
+  }
+  // Shortest-arc delta, so crossing the ±π seam doesn't snap the figure.
+  const delta = Math.atan2(
+    Math.sin(angle - gestureReference),
+    Math.cos(angle - gestureReference),
+  );
+  gestureReference = angle;
+  rotation += delta * RAD2DEG;
+  queueDiagramRender();
+});
+
+function endPointer(event: PointerEvent): void {
+  if (!activePointers.has(event.pointerId)) return;
+  activePointers.delete(event.pointerId);
+  if (diagramEl.hasPointerCapture(event.pointerId)) {
+    diagramEl.releasePointerCapture(event.pointerId);
+  }
+  // Re-seat the reference for any remaining pointer (e.g. lifting one of two
+  // fingers) so the next move measures a fresh delta rather than a jump.
+  gestureReference = gestureActive() ? gestureAngle() : null;
+}
+
+diagramEl.addEventListener("pointerup", endPointer);
+diagramEl.addEventListener("pointercancel", endPointer);
+
 solutionToggle
   .querySelectorAll<HTMLButtonElement>("[data-solution]")
   .forEach((button) => {
@@ -356,6 +499,7 @@ clearButton.addEventListener("click", () => {
     element.removeAttribute("data-computed");
     element.classList.remove("warn");
   });
+  rotation = 0;
   showEmptyState();
   updateSolveButton();
   inputs.get("a")?.focus();

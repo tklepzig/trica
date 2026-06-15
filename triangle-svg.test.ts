@@ -109,6 +109,57 @@ describe("triangleSvg", () => {
   });
 });
 
+// Pull every numeric coordinate out of an SVG string (points="" lists, x/y
+// attrs, polyline coords) so we can assert nothing is placed outside the canvas.
+function coordsOf(svg: string): number[] {
+  // Drop the xmlns URL (it contains "2000") before scanning for coordinates.
+  const withoutUrls = svg.replace(/https?:\/\/\S+?"/g, '"');
+  return (withoutUrls.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
+}
+
+describe("triangleSvg — Satz des Thales", () => {
+  it("draws the semicircle for a right triangle, regardless of which vertex is right", () => {
+    // Right angle at C (3-4-5), at A, and at B — all should get the arc.
+    const rightAtC: Triangle = RIGHT;
+    const rightAtA: Triangle = { a: 5, b: 4, c: 3, A: 90, B: 53.1301, C: 36.8699 };
+    const rightAtB: Triangle = { a: 4, b: 5, c: 3, A: 36.8699, B: 90, C: 53.1301 };
+    expect(triangleSvg(rightAtC)).toContain("tri-thales");
+    expect(triangleSvg(rightAtA)).toContain("tri-thales");
+    expect(triangleSvg(rightAtB)).toContain("tri-thales");
+  });
+
+  it("omits the semicircle for a non-right triangle", () => {
+    expect(triangleSvg(EQUILATERAL)).not.toContain("tri-thales");
+  });
+
+  it("keeps the arc inside the viewBox (the fit accounts for it)", () => {
+    const svg = triangleSvg(RIGHT);
+    for (const value of coordsOf(svg)) {
+      expect(value).toBeGreaterThanOrEqual(0);
+      expect(value).toBeLessThanOrEqual(VIEW);
+    }
+  });
+});
+
+describe("triangleSvg — rotation", () => {
+  it("changes the geometry when rotated", () => {
+    expect(triangleSvg(RIGHT, 45)).not.toEqual(triangleSvg(RIGHT, 0));
+  });
+
+  it("returns to the same figure after a full turn", () => {
+    expect(triangleSvg(RIGHT, 360)).toEqual(triangleSvg(RIGHT, 0));
+  });
+
+  it("never clips, at any rotation (arc included)", () => {
+    for (const angle of [0, 30, 90, 137, 180, 270, 315]) {
+      for (const value of coordsOf(triangleSvg(RIGHT, angle))) {
+        expect(value).toBeGreaterThanOrEqual(0);
+        expect(value).toBeLessThanOrEqual(VIEW);
+      }
+    }
+  });
+});
+
 describe("placeholderSvg", () => {
   it("renders a labelled reference triangle", () => {
     const svg = placeholderSvg();
@@ -116,5 +167,15 @@ describe("placeholderSvg", () => {
     // Vertices and sides are named so the layout is clear before any input.
     expect(svg).toContain(">A</text>");
     expect(svg).toContain(">a</text>");
+  });
+
+  it("rotates (so it can be pre-oriented) without clipping", () => {
+    expect(placeholderSvg(45)).not.toEqual(placeholderSvg(0));
+    for (const angle of [0, 45, 90, 200, 315]) {
+      for (const value of coordsOf(placeholderSvg(angle))) {
+        expect(value).toBeGreaterThanOrEqual(0);
+        expect(value).toBeLessThanOrEqual(VIEW);
+      }
+    }
   });
 });

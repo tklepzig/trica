@@ -8,5 +8,5 @@
     "target": "ES2020",
     "noEmit": true
   },
-  "files": ["solver.ts", "triangle-svg.ts", "ui.ts"]
+  "files": ["solver.ts", "triangle-svg.ts", "preview.ts", "ui.ts"]
 }
