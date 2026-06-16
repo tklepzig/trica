@@ -286,11 +286,11 @@ body {
   display: grid;
   place-items: center;
   padding: var(--padding);
-  // The diagram is a rotation surface: own all pointer gestures here so a
-  // two-finger twist isn't stolen by the browser's pinch-zoom (the viewport
-  // allows zoom elsewhere). Single-finger page scroll is sacrificed over this
-  // one bounded panel — scroll lands anywhere else.
-  touch-action: none;
+  // The diagram is a rotation surface. `pan-y` keeps single-finger vertical
+  // page scroll working over the panel while disabling pinch-zoom, so the
+  // two-finger twist gesture isn't stolen by the browser (the viewport still
+  // allows zoom elsewhere).
+  touch-action: pan-y;
   user-select: none;
   cursor: grab;
 

@@ -445,7 +445,12 @@ diagramEl.addEventListener("pointerdown", (event) => {
     y: event.clientY,
     type: event.pointerType,
   });
-  diagramEl.setPointerCapture(event.pointerId);
+  // Capture mouse/pen so a drag keeps tracking outside the element. A touch is
+  // left uncaptured so a lone finger can still scroll the page (touch-action:
+  // pan-y); the two-finger twist tracks fine via moves over the diagram.
+  if (event.pointerType !== "touch") {
+    diagramEl.setPointerCapture(event.pointerId);
+  }
   gestureReference = gestureActive() ? gestureAngle() : null;
 });
 
