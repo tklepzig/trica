@@ -286,13 +286,15 @@ body {
   display: grid;
   place-items: center;
   padding: var(--padding);
-  // The diagram is a rotation surface. `pan-y` keeps single-finger vertical
-  // page scroll working over the panel while disabling pinch-zoom, so the
-  // two-finger twist gesture isn't stolen by the browser (the viewport still
-  // allows zoom elsewhere).
+  // The diagram is a rotation + zoom surface. `pan-y` keeps single-finger
+  // vertical page scroll working over the panel while disabling the browser's
+  // own pinch-zoom, so the two-finger twist/pinch gesture isn't stolen (the
+  // viewport still allows zoom elsewhere).
   touch-action: pan-y;
   user-select: none;
   cursor: grab;
+  // Clip the SVG to the panel so a zoomed-in figure stays inside its box.
+  overflow: hidden;
 
   &:active {
     cursor: grabbing;
@@ -303,6 +305,12 @@ body {
   width: 100%;
   max-width: 22rem;
   height: auto;
+  // Zoom is driven by a CSS variable on the stable #diagram element, so it
+  // survives the per-frame innerHTML rebuild and persists across re-solves
+  // (only Clear resets it). Scaling about center matches the rotation pivot
+  // (viewBox centre 160,160), so zoom composes cleanly with the baked-in spin.
+  transform: scale(var(--zoom, 1));
+  transform-origin: center;
 }
 
 // SVG strokes/text use --fg-body (not --color100) so they flip with the theme —

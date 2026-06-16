@@ -62,6 +62,13 @@ let selectedSolution = 0;
 // only on Clear. `currentTriangle` is the figure rotation re-renders against.
 const RAD2DEG = 180 / Math.PI;
 let rotation = 0;
+// Diagram zoom (1 = fitted view) — another view setting, applied as a CSS
+// `scale()` on top of the rendered SVG (see paintDiagram). Like rotation it
+// persists across re-solves and is reset only on Clear. Clamped so you can't
+// zoom out past the fitted figure or in beyond a sensible limit.
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 6;
+let zoom = 1;
 let currentTriangle: Triangle | null = null;
 // What the current figure is showing — kept so the rotation gesture can repaint
 // without recomputing it. `provisional`/`valued` mirror triangleSvg's options.
@@ -213,6 +220,17 @@ function paintDiagram(): void {
   diagramEl.innerHTML = currentTriangle
     ? triangleSvg(currentTriangle, rotation, currentDiagramOptions)
     : placeholderSvg(rotation);
+}
+
+function clampZoom(value: number): number {
+  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
+}
+
+// Push the current zoom to the CSS variable that `.tri` reads. It lives on the
+// stable #diagram element, not the SVG (which paintDiagram replaces each frame),
+// so a re-render never drops the zoom — no SVG rebuild needed to apply it.
+function applyZoom(): void {
+  diagramEl.style.setProperty("--zoom", String(zoom));
 }
 
 // Which keys the user actually entered — only these show numeric labels in a
@@ -389,14 +407,16 @@ inputs.forEach((element) => {
 
 solveButton.addEventListener("click", run);
 
-// --- diagram rotation gesture ---------------------------------------------
+// --- diagram rotation + zoom gesture --------------------------------------
 // Works on both the placeholder and a solved triangle, so the figure can be
 // pre-oriented to a real-world object before any value is entered.
-// Mouse/pen: a single-pointer drag spins the figure about the diagram centre.
-// Touch: a two-finger twist spins it (a single touch is ignored so the page
-// still scrolls — the gesture only engages once a second finger lands). We
-// rotate in screen space and re-render the SVG; capture lives on the stable
-// <article> (#diagram), never the <svg> we replace each frame.
+// Mouse/pen: a single-pointer drag spins the figure about the diagram centre;
+// the wheel zooms (see the wheel handler below).
+// Touch: a two-finger gesture both twists (spin) and pinches (zoom) at once — a
+// single touch is ignored so the page still scrolls; the gesture only engages
+// once a second finger lands. We rotate in screen space and re-render the SVG;
+// zoom is a CSS scale layered on top. Capture lives on the stable <article>
+// (#diagram), never the <svg> we replace each frame.
 //
 // Capture rules matter for touch: a lone finger is NOT captured, so the browser
 // can scroll the page (touch-action: pan-y); both fingers ARE captured once the
@@ -408,6 +428,7 @@ solveButton.addEventListener("click", run);
 type ActivePointer = { x: number; y: number; type: string };
 const activePointers = new Map<number, ActivePointer>();
 let gestureReference: number | null = null; // previous gesture angle (radians)
+let pinchReference: number | null = null; // previous two-finger distance (px)
 let renderQueued = false;
 
 function diagramCenter(): { x: number; y: number } {
@@ -435,6 +456,18 @@ function gestureAngle(): number {
   }
   const center = diagramCenter();
   return Math.atan2(pointers[0].y - center.y, pointers[0].x - center.x);
+}
+
+// Distance between the first two pointers (px), or null with fewer than two —
+// the basis for pinch zoom. A lone pointer (mouse drag, single finger) never
+// zooms, so only a genuine two-finger pinch drives it.
+function gestureDistance(): number | null {
+  const pointers = [...activePointers.values()];
+  if (pointers.length < 2) return null;
+  return Math.hypot(
+    pointers[1].x - pointers[0].x,
+    pointers[1].y - pointers[0].y,
+  );
 }
 
 function queueDiagramRender(): void {
@@ -469,6 +502,7 @@ diagramEl.addEventListener("pointerdown", (event) => {
     }
   }
   gestureReference = gestureActive() ? gestureAngle() : null;
+  pinchReference = gestureActive() ? gestureDistance() : null;
 });
 
 diagramEl.addEventListener("pointermove", (event) => {
@@ -491,6 +525,21 @@ diagramEl.addEventListener("pointermove", (event) => {
   gestureReference = angle;
   rotation += delta * RAD2DEG;
   queueDiagramRender();
+
+  // Pinch zoom runs alongside the twist: two fingers spreading/closing scale the
+  // figure by the change in their separation. Delta-ratio against the previous
+  // distance (not the gesture's start) so lifting and re-adding a finger doesn't
+  // snap the zoom. CSS-only, so no SVG rebuild — set the variable directly.
+  const distance = gestureDistance();
+  if (distance !== null && distance > 0) {
+    if (pinchReference === null || pinchReference === 0) {
+      pinchReference = distance;
+    } else {
+      zoom = clampZoom(zoom * (distance / pinchReference));
+      pinchReference = distance;
+      applyZoom();
+    }
+  }
 });
 
 function endPointer(event: PointerEvent): void {
@@ -499,9 +548,10 @@ function endPointer(event: PointerEvent): void {
   if (diagramEl.hasPointerCapture(event.pointerId)) {
     diagramEl.releasePointerCapture(event.pointerId);
   }
-  // Re-seat the reference for any remaining pointer (e.g. lifting one of two
+  // Re-seat the references for any remaining pointer (e.g. lifting one of two
   // fingers) so the next move measures a fresh delta rather than a jump.
   gestureReference = gestureActive() ? gestureAngle() : null;
+  pinchReference = gestureActive() ? gestureDistance() : null;
 }
 
 diagramEl.addEventListener("pointerup", endPointer);
@@ -511,6 +561,20 @@ diagramEl.addEventListener("pointercancel", endPointer);
 // isn't tracking, so these are harmless duplicates for on-diagram lifts.
 window.addEventListener("pointerup", endPointer);
 window.addEventListener("pointercancel", endPointer);
+
+// Desktop zoom: the mouse wheel scales the figure about its centre. Exponential
+// in deltaY so each notch is a constant multiplicative step regardless of the
+// reported magnitude; wheel up (negative deltaY) zooms in. Non-passive + a
+// preventDefault so the page doesn't scroll while zooming over the diagram.
+diagramEl.addEventListener(
+  "wheel",
+  (event) => {
+    event.preventDefault();
+    zoom = clampZoom(zoom * Math.exp(-event.deltaY * 0.0015));
+    applyZoom();
+  },
+  { passive: false },
+);
 
 solutionToggle
   .querySelectorAll<HTMLButtonElement>("[data-solution]")
@@ -528,6 +592,8 @@ clearButton.addEventListener("click", () => {
     element.classList.remove("warn");
   });
   rotation = 0;
+  zoom = 1;
+  applyZoom();
   showEmptyState();
   updateSolveButton();
   inputs.get("a")?.focus();
