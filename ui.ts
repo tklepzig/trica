@@ -69,6 +69,12 @@ let rotation = 0;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 6;
 let zoom = 1;
+// Pan offset (screen px) applied via CSS translate before the zoom scale, so the
+// user can drag a zoomed-in figure around to inspect an edge clipped by the
+// panel. Like zoom it persists until Clear. Only meaningful while zoomed in —
+// clampPan locks it to 0 at 1× (nothing to pan when the figure fits).
+let panX = 0;
+let panY = 0;
 let currentTriangle: Triangle | null = null;
 // What the current figure is showing — kept so the rotation gesture can repaint
 // without recomputing it. `provisional`/`valued` mirror triangleSvg's options.
@@ -226,11 +232,38 @@ function clampZoom(value: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
 }
 
-// Push the current zoom to the CSS variable that `.tri` reads. It lives on the
-// stable #diagram element, not the SVG (which paintDiagram replaces each frame),
-// so a re-render never drops the zoom — no SVG rebuild needed to apply it.
-function applyZoom(): void {
+// Keep the figure reachable but not lost: the pan can move each edge in only as
+// far as the zoom has pushed it past the panel ((zoom-1)·half-extent per side).
+// At 1× this is 0, so pan is locked — there's nothing clipped to chase.
+function clampPan(): void {
+  const rect = diagramEl.getBoundingClientRect();
+  const maxX = Math.max(0, ((zoom - 1) * rect.width) / 2);
+  const maxY = Math.max(0, ((zoom - 1) * rect.height) / 2);
+  panX = Math.max(-maxX, Math.min(maxX, panX));
+  panY = Math.max(-maxY, Math.min(maxY, panY));
+}
+
+// Push the current zoom + pan to the CSS variables that `.tri` reads. They live
+// on the stable #diagram element, not the SVG (which paintDiagram replaces each
+// frame), so a re-render never drops them — no SVG rebuild needed to apply.
+function applyView(): void {
   diagramEl.style.setProperty("--zoom", String(zoom));
+  diagramEl.style.setProperty("--pan-x", `${panX}px`);
+  diagramEl.style.setProperty("--pan-y", `${panY}px`);
+}
+
+// Set zoom to `newZoom` while keeping the screen point (focalX, focalY) pinned
+// under the cursor/fingers — adjust pan to compensate. Derived from
+// screen = center + pan + zoom·offset: holding the focal point fixed gives
+// pan' = w·(1-ratio) + ratio·pan, where w is the focal point relative to centre
+// and ratio = newZoom/zoom. Does not clamp/apply — the caller does both.
+function zoomToward(focalX: number, focalY: number, newZoom: number): void {
+  const clamped = clampZoom(newZoom);
+  const center = diagramCenter();
+  const ratio = clamped / zoom;
+  panX = (focalX - center.x) * (1 - ratio) + ratio * panX;
+  panY = (focalY - center.y) * (1 - ratio) + ratio * panY;
+  zoom = clamped;
 }
 
 // Which keys the user actually entered — only these show numeric labels in a
@@ -407,16 +440,17 @@ inputs.forEach((element) => {
 
 solveButton.addEventListener("click", run);
 
-// --- diagram rotation + zoom gesture --------------------------------------
+// --- diagram rotation + zoom + pan gesture --------------------------------
 // Works on both the placeholder and a solved triangle, so the figure can be
 // pre-oriented to a real-world object before any value is entered.
 // Mouse/pen: a single-pointer drag spins the figure about the diagram centre;
-// the wheel zooms (see the wheel handler below).
-// Touch: a two-finger gesture both twists (spin) and pinches (zoom) at once — a
-// single touch is ignored so the page still scrolls; the gesture only engages
-// once a second finger lands. We rotate in screen space and re-render the SVG;
-// zoom is a CSS scale layered on top. Capture lives on the stable <article>
-// (#diagram), never the <svg> we replace each frame.
+// Shift+drag pans it; the wheel zooms toward the cursor (see handlers below).
+// Touch: a two-finger gesture twists (spin), pinches (zoom) and drags (pan) all
+// at once — a single touch is ignored so the page still scrolls; the gesture
+// only engages once a second finger lands. We rotate in screen space and
+// re-render the SVG; zoom + pan are a CSS transform layered on top. Capture
+// lives on the stable <article> (#diagram), never the <svg> we replace each
+// frame.
 //
 // Capture rules matter for touch: a lone finger is NOT captured, so the browser
 // can scroll the page (touch-action: pan-y); both fingers ARE captured once the
@@ -429,6 +463,9 @@ type ActivePointer = { x: number; y: number; type: string };
 const activePointers = new Map<number, ActivePointer>();
 let gestureReference: number | null = null; // previous gesture angle (radians)
 let pinchReference: number | null = null; // previous two-finger distance (px)
+let gestureMidpoint: { x: number; y: number } | null = null; // prev two-finger midpoint
+let panPointerId: number | null = null; // the mouse/pen pointer currently shift-panning
+let panLast: { x: number; y: number } | null = null; // its last position (px)
 let renderQueued = false;
 
 function diagramCenter(): { x: number; y: number } {
@@ -470,6 +507,18 @@ function gestureDistance(): number | null {
   );
 }
 
+// Midpoint between the first two pointers (px), or null with fewer than two —
+// its frame-to-frame movement drives the two-finger pan, and it's the focal
+// point pinch zoom anchors to.
+function twoFingerMidpoint(): { x: number; y: number } | null {
+  const pointers = [...activePointers.values()];
+  if (pointers.length < 2) return null;
+  return {
+    x: (pointers[0].x + pointers[1].x) / 2,
+    y: (pointers[0].y + pointers[1].y) / 2,
+  };
+}
+
 function queueDiagramRender(): void {
   if (renderQueued) return;
   renderQueued = true;
@@ -487,8 +536,12 @@ diagramEl.addEventListener("pointerdown", (event) => {
   });
   if (event.pointerType !== "touch") {
     // Mouse/pen: a single-pointer drag is the gesture — capture so it keeps
-    // tracking outside the element.
+    // tracking outside the element. With Shift held it pans instead of rotates.
     diagramEl.setPointerCapture(event.pointerId);
+    if (event.shiftKey) {
+      panPointerId = event.pointerId;
+      panLast = { x: event.clientX, y: event.clientY };
+    }
   } else if (gestureActive()) {
     // Touch is a gesture only with a second finger down: capture BOTH now (so the
     // twist tracks even if a finger drifts off the diagram). A lone finger is
@@ -503,6 +556,7 @@ diagramEl.addEventListener("pointerdown", (event) => {
   }
   gestureReference = gestureActive() ? gestureAngle() : null;
   pinchReference = gestureActive() ? gestureDistance() : null;
+  gestureMidpoint = gestureActive() ? twoFingerMidpoint() : null;
 });
 
 diagramEl.addEventListener("pointermove", (event) => {
@@ -510,6 +564,19 @@ diagramEl.addEventListener("pointermove", (event) => {
   if (!pointer) return;
   pointer.x = event.clientX;
   pointer.y = event.clientY;
+
+  // Desktop Shift+drag pans the figure 1:1 with the cursor (a plain drag still
+  // rotates). Handled before the rotation path so this pointer never spins.
+  if (panPointerId === event.pointerId && panLast) {
+    event.preventDefault();
+    panX += event.clientX - panLast.x;
+    panY += event.clientY - panLast.y;
+    panLast = { x: event.clientX, y: event.clientY };
+    clampPan();
+    applyView();
+    return;
+  }
+
   if (!gestureActive()) return;
   event.preventDefault();
   const angle = gestureAngle();
@@ -523,21 +590,32 @@ diagramEl.addEventListener("pointermove", (event) => {
     Math.cos(angle - gestureReference),
   );
   gestureReference = angle;
+  // Rotation always pivots about the panel centre (gestureAngle uses
+  // diagramCenter), so when the figure is zoomed + panned off-centre a twist
+  // spins it about the panel centre rather than its own visual centre. A minor
+  // feel quirk, not a correctness issue — accepted to keep the pivot stable.
   rotation += delta * RAD2DEG;
   queueDiagramRender();
 
-  // Pinch zoom runs alongside the twist: two fingers spreading/closing scale the
-  // figure by the change in their separation. Delta-ratio against the previous
-  // distance (not the gesture's start) so lifting and re-adding a finger doesn't
-  // snap the zoom. CSS-only, so no SVG rebuild — set the variable directly.
+  // Pinch zoom + pan run alongside the twist, all from the same two fingers:
+  // their changing separation scales the figure (anchored to the midpoint, so it
+  // zooms toward the fingers) and their moving midpoint pans it. Delta-ratio /
+  // delta against the previous frame (not the gesture start) so lifting and
+  // re-adding a finger never snaps. CSS-only — no SVG rebuild.
   const distance = gestureDistance();
-  if (distance !== null && distance > 0) {
-    if (pinchReference === null || pinchReference === 0) {
+  const midpoint = twoFingerMidpoint();
+  if (distance !== null && distance > 0 && midpoint) {
+    if (pinchReference === null || pinchReference === 0 || !gestureMidpoint) {
       pinchReference = distance;
+      gestureMidpoint = midpoint;
     } else {
-      zoom = clampZoom(zoom * (distance / pinchReference));
+      zoomToward(gestureMidpoint.x, gestureMidpoint.y, zoom * (distance / pinchReference));
+      panX += midpoint.x - gestureMidpoint.x;
+      panY += midpoint.y - gestureMidpoint.y;
       pinchReference = distance;
-      applyZoom();
+      gestureMidpoint = midpoint;
+      clampPan();
+      applyView();
     }
   }
 });
@@ -545,6 +623,10 @@ diagramEl.addEventListener("pointermove", (event) => {
 function endPointer(event: PointerEvent): void {
   if (!activePointers.has(event.pointerId)) return;
   activePointers.delete(event.pointerId);
+  if (event.pointerId === panPointerId) {
+    panPointerId = null;
+    panLast = null;
+  }
   if (diagramEl.hasPointerCapture(event.pointerId)) {
     diagramEl.releasePointerCapture(event.pointerId);
   }
@@ -552,6 +634,7 @@ function endPointer(event: PointerEvent): void {
   // fingers) so the next move measures a fresh delta rather than a jump.
   gestureReference = gestureActive() ? gestureAngle() : null;
   pinchReference = gestureActive() ? gestureDistance() : null;
+  gestureMidpoint = gestureActive() ? twoFingerMidpoint() : null;
 }
 
 diagramEl.addEventListener("pointerup", endPointer);
@@ -562,16 +645,18 @@ diagramEl.addEventListener("pointercancel", endPointer);
 window.addEventListener("pointerup", endPointer);
 window.addEventListener("pointercancel", endPointer);
 
-// Desktop zoom: the mouse wheel scales the figure about its centre. Exponential
-// in deltaY so each notch is a constant multiplicative step regardless of the
-// reported magnitude; wheel up (negative deltaY) zooms in. Non-passive + a
-// preventDefault so the page doesn't scroll while zooming over the diagram.
+// Desktop zoom: the mouse wheel scales the figure toward the cursor, so you can
+// point at a clipped edge and zoom straight into it (no separate pan needed for
+// the common case). Exponential in deltaY so each notch is a constant
+// multiplicative step regardless of the reported magnitude; wheel up (negative
+// deltaY) zooms in. Non-passive + preventDefault so the page doesn't scroll.
 diagramEl.addEventListener(
   "wheel",
   (event) => {
     event.preventDefault();
-    zoom = clampZoom(zoom * Math.exp(-event.deltaY * 0.0015));
-    applyZoom();
+    zoomToward(event.clientX, event.clientY, zoom * Math.exp(-event.deltaY * 0.0015));
+    clampPan();
+    applyView();
   },
   { passive: false },
 );
@@ -593,7 +678,9 @@ clearButton.addEventListener("click", () => {
   });
   rotation = 0;
   zoom = 1;
-  applyZoom();
+  panX = 0;
+  panY = 0;
+  applyView();
   showEmptyState();
   updateSolveButton();
   inputs.get("a")?.focus();

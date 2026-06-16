@@ -305,11 +305,13 @@ body {
   width: 100%;
   max-width: 22rem;
   height: auto;
-  // Zoom is driven by a CSS variable on the stable #diagram element, so it
-  // survives the per-frame innerHTML rebuild and persists across re-solves
-  // (only Clear resets it). Scaling about center matches the rotation pivot
+  // Zoom + pan are driven by CSS variables on the stable #diagram element, so
+  // they survive the per-frame innerHTML rebuild and persist across re-solves
+  // (only Clear resets them). Scaling about center matches the rotation pivot
   // (viewBox centre 160,160), so zoom composes cleanly with the baked-in spin.
-  transform: scale(var(--zoom, 1));
+  // translate sits before scale so the pan offset stays in plain screen pixels
+  // (1px drag = 1px move) regardless of the zoom level.
+  transform: translate(var(--pan-x, 0px), var(--pan-y, 0px)) scale(var(--zoom, 1));
   transform-origin: center;
 }
 
