@@ -397,6 +397,13 @@ solveButton.addEventListener("click", run);
 // still scrolls — the gesture only engages once a second finger lands). We
 // rotate in screen space and re-render the SVG; capture lives on the stable
 // <article> (#diagram), never the <svg> we replace each frame.
+//
+// Capture rules matter for touch: a lone finger is NOT captured, so the browser
+// can scroll the page (touch-action: pan-y); both fingers ARE captured once the
+// second lands, so the twist keeps tracking even if a finger leaves the small
+// diagram. pointerup/pointercancel are also handled on window so a finger lifted
+// off the diagram can't leave a stale pointer behind (which would otherwise let
+// a single finger spin the figure, or corrupt the two-finger angle).
 
 type ActivePointer = { x: number; y: number; type: string };
 const activePointers = new Map<number, ActivePointer>();
@@ -445,11 +452,21 @@ diagramEl.addEventListener("pointerdown", (event) => {
     y: event.clientY,
     type: event.pointerType,
   });
-  // Capture mouse/pen so a drag keeps tracking outside the element. A touch is
-  // left uncaptured so a lone finger can still scroll the page (touch-action:
-  // pan-y); the two-finger twist tracks fine via moves over the diagram.
   if (event.pointerType !== "touch") {
+    // Mouse/pen: a single-pointer drag is the gesture — capture so it keeps
+    // tracking outside the element.
     diagramEl.setPointerCapture(event.pointerId);
+  } else if (gestureActive()) {
+    // Touch is a gesture only with a second finger down: capture BOTH now (so the
+    // twist tracks even if a finger drifts off the diagram). A lone finger is
+    // never captured, leaving it free to scroll the page (touch-action: pan-y).
+    for (const id of activePointers.keys()) {
+      try {
+        diagramEl.setPointerCapture(id);
+      } catch {
+        // Pointer already released — nothing to capture.
+      }
+    }
   }
   gestureReference = gestureActive() ? gestureAngle() : null;
 });
@@ -489,6 +506,11 @@ function endPointer(event: PointerEvent): void {
 
 diagramEl.addEventListener("pointerup", endPointer);
 diagramEl.addEventListener("pointercancel", endPointer);
+// Safety net: a finger lifted/cancelled off the diagram (it's small on mobile)
+// still gets cleaned up, so no pointer goes stale. endPointer ignores ids it
+// isn't tracking, so these are harmless duplicates for on-diagram lifts.
+window.addEventListener("pointerup", endPointer);
+window.addEventListener("pointercancel", endPointer);
 
 solutionToggle
   .querySelectorAll<HTMLButtonElement>("[data-solution]")
