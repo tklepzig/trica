@@ -72,6 +72,12 @@ body {
     align-self: start;
     height: calc(100dvh - 2 * var(--spacing));
   }
+
+  // Single column stacks in DOM order (bar, inputs, diagram, results). Pull the
+  // inputs ahead of the bar so the order reads inputs → solution bar → diagram.
+  .inputs {
+    order: -1;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -94,6 +100,30 @@ body {
   }
   .results {
     grid-column: 1 / -1;
+  }
+
+  // When the solution bar is shown (SSA case) it sits above the diagram in the
+  // right column; the inputs panel spans the bar + diagram rows beside it.
+  // Scoped with :has so a hidden bar doesn't reserve an empty row — without it
+  // the default two-column layout (inputs | diagram, results below) applies.
+  .layout:has(.solution-bar:not([hidden])) {
+    grid-template-areas:
+      "inputs bar"
+      "inputs diagram"
+      "results results";
+
+    > .solution-bar {
+      grid-area: bar;
+    }
+    > .inputs {
+      grid-area: inputs;
+    }
+    > .diagram {
+      grid-area: diagram;
+    }
+    > .results {
+      grid-area: results;
+    }
   }
 
   // Two columns of inputs on desktop: Seiten beside Winkel.
@@ -233,15 +263,23 @@ body {
 // ---------------------------------------------------------------------------
 // Diagram
 // ---------------------------------------------------------------------------
-.diagram > header {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: var(--spacing);
-}
+// Solution picker (SSA two-triangle case): a horizontal command bar that sits
+// OUTSIDE the panels, mirroring the left rail — on desktop spanning the top of
+// the layout, on mobile dropped between the inputs and the diagram (see the
+// layout grid). Two filled commands in distinct colours; the inactive one is
+// dimmed rather than outlined, so it still reads as a coloured button.
+// `.compound-commands` is inline-flex, so the bare [hidden] attribute can't hide
+// it — this higher-specificity rule does.
+.solution-bar {
+  // Fill the width like the panels: the two commands grow to fill the space
+  // between the spacer caps.
+  .command {
+    flex: 1;
+  }
 
-.solution-toggle[hidden] {
-  display: none;
+  &[hidden] {
+    display: none;
+  }
 }
 
 .diagram > article {

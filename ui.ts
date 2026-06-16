@@ -355,7 +355,8 @@ function renderSolution(): void {
     .querySelectorAll<HTMLButtonElement>("[data-solution]")
     .forEach((button) => {
       const index = Number(button.dataset.solution);
-      button.classList.toggle("outline", index !== selectedSolution);
+      // The active solution is steel (shade3); the others stay default-orange.
+      button.classList.toggle("shade3", index === selectedSolution);
     });
 }
 

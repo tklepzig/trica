@@ -31,6 +31,25 @@
       </nav>
 
       <div class="layout">
+        <!-- Lösungsauswahl (nur im mehrdeutigen SSA-Fall sichtbar). Sitzt wie
+             die linke Befehlsleiste außerhalb der Panels: auf dem Desktop über
+             allen Panels, auf dem Smartphone zwischen Eingaben und Diagramm. -->
+        <nav
+          class="compound-commands solution-bar"
+          id="solutionToggle"
+          aria-label="Lösung wählen"
+          hidden
+        >
+          <div class="spacer"></div>
+          <button type="button" class="command shade3" data-solution="0">
+            Lösung 1
+          </button>
+          <button type="button" class="command" data-solution="1">
+            Lösung 2
+          </button>
+          <div class="spacer"></div>
+        </nav>
+
         <!-- Eingaben -->
         <section class="panel inputs">
           <header></header>
@@ -130,20 +149,7 @@
 
         <!-- Diagramm -->
         <section class="panel diagram">
-          <header>
-            <div
-              class="compound-commands solution-toggle"
-              id="solutionToggle"
-              hidden
-            >
-              <button type="button" class="command" data-solution="0">
-                Lösung 1
-              </button>
-              <button type="button" class="command outline" data-solution="1">
-                Lösung 2
-              </button>
-            </div>
-          </header>
+          <header></header>
           <article id="diagram"></article>
           <footer id="triangle-type"></footer>
         </section>
