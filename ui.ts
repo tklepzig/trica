@@ -205,7 +205,7 @@ function renderResults(derived: Derived): void {
   resultsEl.innerHTML = cells
     .map(
       ([label, value]) =>
-        `<div class="result-cell"><span class="label">${label}</span><span class="value">${value}</span></div>`,
+        `<div class="result-cell"><span class="result-label">${label}</span><span class="value">${value}</span></div>`,
     )
     .join("");
   resultsPanel.hidden = false;

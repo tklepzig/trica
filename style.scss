@@ -401,7 +401,7 @@ body {
   background: color-mix(in oklab, var(--fg-body) 8%, transparent);
 }
 
-.result-cell .label {
+.result-cell .result-label {
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.08em;
